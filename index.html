@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OB弹幕播放器</title>
+    <title>OB弹幕播放器 (响应式)</title>
     <style>
+        /* --- CSS 样式开始 (保持不变) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; overflow: hidden; background-color: #000; }
         .artplayer-app { width: 100%; height: 100%; }
-        
+
         /* 现代化通知系统样式 */
         .notifications-container {
             position: fixed;
@@ -21,7 +22,7 @@
             max-width: 90%;
             width: 300px;
         }
-        
+
         @media (max-width: 480px) {
             .notifications-container {
                 top: 10px;
@@ -29,7 +30,7 @@
                 width: calc(100% - 20px);
             }
         }
-        
+
         .notification {
             display: flex;
             align-items: center;
@@ -47,28 +48,28 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
         }
-        
+
         .notification.success {
             background: linear-gradient(to right, rgba(46, 204, 113, 0.9), rgba(39, 174, 96, 0.9));
         }
-        
+
         .notification.error {
             background: linear-gradient(to right, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
         }
-        
+
         .notification.loading {
             background: linear-gradient(to right, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9));
         }
-        
+
         .notification.info {
             background: linear-gradient(to right, rgba(52, 73, 94, 0.9), rgba(44, 62, 80, 0.9));
         }
-        
+
         .notification.show {
             transform: translateX(0);
             opacity: 1;
         }
-        
+
         .notification-icon {
             margin-right: 10px;
             flex-shrink: 0;
@@ -78,12 +79,12 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .notification-content {
             flex-grow: 1;
             word-break: break-word;
         }
-        
+
         .notification-close {
             margin-left: 10px;
             cursor: pointer;
@@ -93,11 +94,11 @@
             width: 16px;
             height: 16px;
         }
-        
+
         .notification-close:hover {
             opacity: 1;
         }
-        
+
         .notification-progress {
             position: absolute;
             bottom: 0;
@@ -107,47 +108,44 @@
             width: 100%;
             transform-origin: left;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         .spin {
             animation: spin 1.5s linear infinite;
         }
+        /* --- CSS 样式结束 --- */
     </style>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer-plugin-danmuku/dist/artplayer-plugin-danmuku.js"></script>
 </head>
 <body>
-<div class="artplayer-app"></div>
-<div class="notifications-container" id="notifications-container"></div>
-
-<script>
+<div class="artplayer-app"></div> <div class="notifications-container" id="notifications-container"></div> <script>
+// --- 工具函数：获取 URL 参数 ---
 function getUrlParameter(name) {
-    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    const results = regex.exec(location.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    const search = decodeURIComponent(location.search);
+    const regex = new RegExp('[\\?&]' + name.replace(/[\[\]]/g, '\\$&') + '=([^&#]*)');
+    const results = regex.exec(search);
+    return results === null ? '' : (results[1] || '');
 }
 
-// 现代化通知系统
+// --- 现代化通知系统对象 ---
 const notification = {
     container: document.getElementById('notifications-container'),
     activeNotifications: {},
-    icons: {
+    icons: { /* ... 图标 SVG 代码省略，与之前相同 ... */
         success: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
         error: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
         loading: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`,
         info: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
         close: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
     },
-    
-    show(message, type = 'success', duration = 3000) {
+    show(message, type = 'success', duration = 3000) { /* ... show 方法代码省略，与之前相同 ... */
         console.log(`[通知] 类型: ${type}, 信息: ${message}`);
-        
-        // 创建通知元素
-        const id = Date.now();
+        const id = Date.now() + Math.random();
         const notificationEl = document.createElement('div');
         notificationEl.className = `notification ${type}`;
         notificationEl.innerHTML = `
@@ -156,125 +154,164 @@ const notification = {
             <div class="notification-close">${this.icons.close}</div>
             ${duration > 0 && type !== 'loading' ? '<div class="notification-progress"></div>' : ''}
         `;
-        
-        // 添加到容器
         this.container.appendChild(notificationEl);
-        this.activeNotifications[id] = {
-            element: notificationEl,
-            timeout: null,
-            progressInterval: null
-        };
-        
-        // 显示通知（添加动画类）
-        setTimeout(() => {
-            notificationEl.classList.add('show');
-        }, 10);
-        
-        // 设置进度条动画
+        this.activeNotifications[id] = { element: notificationEl, timeout: null, progressInterval: null };
+        setTimeout(() => { notificationEl.classList.add('show'); }, 10);
         if (duration > 0 && type !== 'loading') {
             const progressEl = notificationEl.querySelector('.notification-progress');
-            let progress = 100;
-            const interval = 100; // 更新间隔（毫秒）
-            const step = 100 / (duration / interval);
-            
-            this.activeNotifications[id].progressInterval = setInterval(() => {
-                progress -= step;
-                if (progress <= 0) {
-                    clearInterval(this.activeNotifications[id].progressInterval);
-                    progress = 0;
-                }
-                progressEl.style.transform = `scaleX(${progress / 100})`;
-            }, interval);
-            
-            // 设置自动关闭
-            this.activeNotifications[id].timeout = setTimeout(() => {
-                this.hide(id);
-            }, duration);
+            if (progressEl) {
+                let progress = 100;
+                const interval = 100;
+                const step = 100 / (duration / interval);
+                this.activeNotifications[id].progressInterval = setInterval(() => {
+                    progress -= step;
+                    if (progress <= 0) { clearInterval(this.activeNotifications[id].progressInterval); progress = 0; }
+                    progressEl.style.transform = `scaleX(${progress / 100})`;
+                }, interval);
+                this.activeNotifications[id].timeout = setTimeout(() => { this.hide(id); }, duration);
+            }
         }
-        
-        // 添加关闭按钮事件
         const closeBtn = notificationEl.querySelector('.notification-close');
-        closeBtn.addEventListener('click', () => {
-            this.hide(id);
-        });
-        
+        closeBtn.addEventListener('click', () => { this.hide(id); });
         return id;
     },
-    
-    hide(id) {
-        const notification = this.activeNotifications[id];
-        if (!notification) return;
-        
-        // 清除定时器
-        if (notification.timeout) {
-            clearTimeout(notification.timeout);
-        }
-        if (notification.progressInterval) {
-            clearInterval(notification.progressInterval);
-        }
-        
-        // 添加退出动画
-        notification.element.classList.remove('show');
-        
-        // 移除元素
+    hide(id) { /* ... hide 方法代码省略，与之前相同 ... */
+        const notificationData = this.activeNotifications[id];
+        if (!notificationData) return;
+        if (notificationData.timeout) { clearTimeout(notificationData.timeout); }
+        if (notificationData.progressInterval) { clearInterval(notificationData.progressInterval); }
+        notificationData.element.classList.remove('show');
         setTimeout(() => {
-            if (notification.element.parentNode) {
-                notification.element.parentNode.removeChild(notification.element);
+            if (notificationData.element.parentNode) {
+                notificationData.element.parentNode.removeChild(notificationData.element);
             }
             delete this.activeNotifications[id];
         }, 300);
     },
-    
-    hideAll() {
-        Object.keys(this.activeNotifications).forEach(id => {
-            this.hide(id);
-        });
+    hideAll() { /* ... hideAll 方法代码省略，与之前相同 ... */
+         Object.keys(this.activeNotifications).forEach(id => { this.hide(id); });
     }
 };
 
-// 显示初始加载通知
+// --- 初始加载和参数处理 ---
 const loadingId = notification.show('正在加载播放器...', 'loading');
+const videoUrl = getUrlParameter('url') || '/assets/sample/video.mp4'; // 视频 URL
+const rawDmkParam = getUrlParameter('dmk'); // 原始弹幕参数
+const hasDmkParam = location.search.includes('dmk='); // 是否包含 dmk 参数
+const danmakuUrl = hasDmkParam ? rawDmkParam : '/assets/sample/danmuku.xml'; // 最终弹幕 URL
 
-const videoUrl = getUrlParameter('url') || '/assets/sample/video.mp4';
-const danmakuUrl = getUrlParameter('dmk') || '/assets/sample/danmuku.xml';
+// --- 响应式弹幕字体大小逻辑 ---
+let artInstance = null; // 用于存储 Artplayer 实例，以便在回调中访问
+const mobileMediaQuery = window.matchMedia("(max-width: 767px)"); // 媒体查询对象
 
+// 根据是否为移动端返回字体大小
+function getDanmakuFontSize(isMobile) {
+    return isMobile ? 15 : 25; // 移动端 15px，桌面端 25px
+}
+
+// 更新弹幕字体大小的函数
+function updateDanmakuFontSize() {
+    // 确保 Artplayer 实例和弹幕插件都已加载
+    if (artInstance && artInstance.plugins && artInstance.plugins.artplayerPluginDanmuku) {
+        const isMobile = mobileMediaQuery.matches; // 当前是否匹配移动端查询
+        const newSize = getDanmakuFontSize(isMobile);
+        // 检查插件选项是否存在并且有 fontSize 属性
+        const currentSize = artInstance.plugins.artplayerPluginDanmuku.option ? artInstance.plugins.artplayerPluginDanmuku.option.fontSize : null;
+
+        // 仅在字体大小需要改变时更新
+        if (currentSize !== null && newSize !== currentSize) {
+            console.log(`窗口大小变化，更新弹幕字号为: ${newSize}`);
+            try {
+                 // 使用插件提供的 config 方法安全地更新配置
+                artInstance.plugins.artplayerPluginDanmuku.config('fontSize', newSize);
+                // 调用插件的 resize 方法应用更改（重要！）
+                artInstance.plugins.artplayerPluginDanmuku.resize();
+            } catch(e) {
+                console.error("更新弹幕字体大小失败:", e);
+            }
+        }
+    }
+}
+
+// 防抖函数，避免 resize 事件过于频繁触发更新
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// 创建防抖版的更新函数
+const debouncedUpdateFontSize = debounce(updateDanmakuFontSize, 250); // 250ms 延迟
+
+// 监听媒体查询状态变化
+if (mobileMediaQuery.addEventListener) {
+     mobileMediaQuery.addEventListener('change', debouncedUpdateFontSize);
+} else if (mobileMediaQuery.addListener) { // 兼容旧浏览器
+     mobileMediaQuery.addListener(debouncedUpdateFontSize);
+}
+// --- 响应式字体大小逻辑结束 ---
+
+// --- DOM 加载完成后的初始化 ---
 document.addEventListener('DOMContentLoaded', function () {
+    // 检查是否未配置弹幕池
+    if (!hasDmkParam) {
+        notification.show('该视频未配置弹幕池', 'info', 5000);
+    }
+
     try {
+        // 计算初始弹幕字体大小
+        const initialFontSize = getDanmakuFontSize(mobileMediaQuery.matches);
+        console.log(`设备检测: ${mobileMediaQuery.matches ? '移动端' : '桌面端'}, 初始弹幕字号: ${initialFontSize}`);
+
+        // 初始化 Artplayer
         const art = new Artplayer({
             container: '.artplayer-app',
             url: videoUrl,
-            autoSize: false,
-            fullscreen: true,
-            playbackRate: true,
-            miniProgressBar: true,
-            autoPlayback: true,
-            fastForward: true,
+            autoSize: false,      // 通常不需要，因为容器是100%
+            fullscreen: true,     // 启用全屏
+            playbackRate: true,   // 启用播放速率控制
+            miniProgressBar: true,// 启用迷你进度条
+            autoPlayback: true,   // 尝试自动播放 (可能被浏览器阻止)
+            fastForward: true,    // 启用快进按钮 (通常是键盘控制)
             plugins: [
                 artplayerPluginDanmuku({
-                    danmuku: danmakuUrl,
-                    speed: 5,
-                    margin: [10, '0%'],
-                    opacity: 1,
-                    color: '#FFFFFF',
-                    mode: 0,
-                    heatmap: true,
-                    points: [],
-                    modes: [0, 1, 2],
-                    fontSize: 20,
-                    antiOverlap: true,
-                    emitter: true,
-                    maxLength: 200,
-                    lockTime: 5,
-                    theme: 'dark',
+                    danmuku: danmakuUrl,    // 弹幕文件 URL
+                    speed: 5,               // 弹幕速度 (像素/秒)
+                    margin: [10, '0%'],     // 弹幕边距 [顶部, 底部]
+                    opacity: 1,             // 弹幕不透明度
+                    color: '#FFFFFF',       // 默认弹幕颜色 (如果弹幕文件没指定)
+                    mode: 0,                // 弹幕模式 (0=滚动, 1=顶部, 2=底部)
+                    heatmap: true,          // 显示热度图
+                    points: [],             // 自定义热度图点
+                    modes: [0, 1, 2],       // 允许的弹幕模式
+                    fontSize: initialFontSize, // **设置初始响应式字体大小**
+                    antiOverlap: true,      // 启用防重叠
+                    emitter: true,          // **启用弹幕发送器**
+                    maxLength: 200,         // 发送弹幕的最大长度
+                    lockTime: 5,            // 弹幕锁定时间 (秒)
+                    theme: 'dark',          // 发送器主题
+                    // 发送弹幕前的钩子函数
                     beforeEmit(danmu) {
+                        // 检查是否允许发送 (有弹幕池配置且URL不为空)
+                        if (!hasDmkParam || !danmakuUrl) {
+                            notification.show('无法发送弹幕：未配置弹幕池或地址无效', 'error', 3000);
+                            return Promise.resolve(false); // 阻止发送
+                        }
+
                         return new Promise(resolve => {
                             const content = danmu.text.trim();
                             if (!content) {
                                 notification.show('弹幕不能为空！', 'error', 2000);
-                                return resolve(false);
+                                return resolve(false); // 阻止发送空弹幕
                             }
 
-                            const currentTime = art.currentTime || 0;
+                            const currentTime = artInstance ? artInstance.currentTime : 0; // 使用 artInstance 获取时间
                             const postData = {
                                 dmkUrl: danmakuUrl,
                                 text: content,
@@ -283,40 +320,77 @@ document.addEventListener('DOMContentLoaded', function () {
                                 mode: danmu.mode
                             };
 
+                            // 假设存在 sendDanmu.php 用于处理弹幕提交
                             fetch('sendDanmu.php', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify(postData)
                             })
-                            .then(res => res.text())
-                            .then(() => notification.show('弹幕发送成功', 'success', 2000))
+                            .then(res => {
+                                if (!res.ok) { throw new Error(`HTTP error! status: ${res.status}`); }
+                                return res.text();
+                            })
+                            .then(responseText => {
+                                console.log("弹幕发送响应:", responseText);
+                                notification.show('弹幕发送成功', 'success', 2000);
+                                resolve(true); // 允许 Artplayer 添加该弹幕
+                            })
                             .catch(err => {
                                 notification.show('弹幕发送失败', 'error', 3000);
                                 console.error('弹幕发送失败:', err);
-                            })
-                            .finally(() => resolve(true));
+                                resolve(false); // 阻止添加该弹幕
+                            });
                         });
                     }
                 }),
             ],
         });
 
+        // 将创建的播放器实例保存到全局变量，以便 resize 回调可以访问
+        artInstance = art;
+
+        // --- Artplayer 事件监听 ---
         art.on('ready', () => {
-            notification.hide(loadingId);
+            notification.hide(loadingId); // 隐藏加载通知
             notification.show('数据获取成功', 'success', 2000);
+            // 播放器准备好后，也执行一次字体大小检查更新，确保初始状态正确
+            updateDanmakuFontSize();
         });
-        
-        art.on('error', () => notification.show('视频加载失败', 'error', 5000));
-        
-        art.on('artplayerPluginDanmuku:loaded', danmus =>
-            notification.show(`已加载 ${danmus.length} 条弹幕`, 'info', 3000)
-        );
+
+        art.on('error', (error) => {
+            notification.hide(loadingId);
+            notification.show(`视频加载失败: ${error.message || '未知错误'}`, 'error', 5000);
+            console.error('视频加载错误:', error);
+        });
+
+        // 监听弹幕加载完成事件
+        art.on('artplayerPluginDanmuku:loaded', (danmus) => {
+            if (hasDmkParam && danmakuUrl) {
+                 notification.show(`已加载 ${danmus.length} 条弹幕`, 'info', 3000);
+            } else if (hasDmkParam && !danmakuUrl) {
+                 notification.show(`弹幕池地址为空，未加载弹幕`, 'info', 3000);
+            }
+            // 如果 !hasDmkParam，已经在顶部显示了“未配置弹幕池”
+        });
+
+        // 可以添加更多 Artplayer 事件监听...
+
     } catch (error) {
         notification.hide(loadingId);
-        notification.show('播放器初始化失败', 'error', 0);
+        notification.show('播放器初始化失败', 'error', 0); // 持续显示错误
         console.error('播放器初始化失败:', error);
     }
 });
+
+// --- 清理工作：页面卸载时移除监听器 ---
+window.addEventListener('unload', () => {
+    if (mobileMediaQuery.removeEventListener) {
+        mobileMediaQuery.removeEventListener('change', debouncedUpdateFontSize);
+    } else if (mobileMediaQuery.removeListener) { // 兼容旧浏览器
+        mobileMediaQuery.removeListener(debouncedUpdateFontSize);
+    }
+});
+
 </script>
 </body>
 </html>
