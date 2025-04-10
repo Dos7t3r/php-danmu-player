@@ -35,7 +35,7 @@
 ### 1. 克隆或下载项目
 
 ```bash
-git clone https://github.com/yourusername/enhanced-danmaku-player.git
+git clone https://github.com/Dos7t3r/php-danmu-player
 ```
 
 ### 2. 部署到服务器
@@ -46,7 +46,6 @@ git clone https://github.com/yourusername/enhanced-danmaku-player.git
 - your-web-root/
   ├── index.html
   ├── sendDanmu.php
-  └── dmk/  (确保有写入权限)
 ```
 
 ### 3. 配置播放器 URL 参数
@@ -59,10 +58,9 @@ git clone https://github.com/yourusername/enhanced-danmaku-player.git
 示例访问方式：
 
 ```url
-https://your-domain.com/index.html?url=https://example.com/video.mp4&dmk=https://your-domain.com/dmk/video.xml
+https://your-domain.com/index.html?url=https://example.com/video.mp4&dmk=https://your-domain.com/dmk/danmu.xml
 ```
 
-若未提供 `dmk` 参数，播放器将自动在服务器的 `/dmk` 目录中根据视频名创建对应的 XML 弹幕库。
 
 ---
 
@@ -70,7 +68,7 @@ https://your-domain.com/index.html?url=https://example.com/video.mp4&dmk=https:/
 
 - `index.html`：播放器主页面，包含前端界面与逻辑。
 - `sendDanmu.php`：弹幕数据的后端接收与 XML 文件存储。
-- `/dmk`：存储自动生成的弹幕 XML 文件的目录（需服务器有写入权限）。
+
 
 ---
 
@@ -116,3 +114,7 @@ https://your-domain.com/index.html?url=https://example.com/video.mp4&dmk=https:/
 ## 💬 联系方式
 
 如有任何问题或建议，欢迎提交 Issue 或 PR！
+
+## 🧠 Tip
+
+项目开发By ChatGPT & v0.dev
