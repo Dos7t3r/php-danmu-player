@@ -1,4 +1,4 @@
-# 增强版弹幕播放器（Enhanced Danmaku Player）
+# PHP增强版弹幕播放器（PHP Enhanced Danmaku Player）
 
 🎬 **一个基于 ArtPlayer.js 构建的现代化弹幕播放器，集成高颜值通知系统与动态弹幕管理，开箱即用。**
 
