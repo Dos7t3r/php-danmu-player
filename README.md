@@ -21,6 +21,11 @@
 
 ---
 
+## 📺 演示站点
+https://oldbili.fun
+
+---
+
 ## 🔧 技术栈
 
 - **ArtPlayer.js** - 现代化 HTML5 视频播放器库
@@ -29,6 +34,7 @@
 - **PHP** - 后端处理弹幕存储（sendDanmu.php）
 
 ---
+
 
 ## 🛠️ 使用方法
 
