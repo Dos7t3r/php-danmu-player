@@ -1,48 +1,51 @@
-# PHP增强版弹幕播放器（PHP Enhanced Danmaku Player）
-
-🎬 **一个基于 ArtPlayer.js 构建的现代化弹幕播放器，集成高颜值通知系统与动态弹幕管理，开箱即用。**
+以下是将你提供的两个 README 合并整理后的最终完整版，保留了两者的核心功能和优势，并进行了结构优化与语言统一，适合用于开源项目说明文档：
 
 ---
 
-![image](https://github.com/user-attachments/assets/8e06707a-76c7-43f9-942e-66b8cd53c1c1)
----
-![image](https://github.com/user-attachments/assets/db70cd73-3e2c-4e38-9211-e8b016f020cc)
+# 🎥 OldBili Player v1.3.2 - PHP 增强版弹幕播放器
 
-
-
-## 📖 项目介绍
-
-本项目是一个功能全面、界面美观的 HTML5 弹幕播放器，基于 ArtPlayer.js 和 artplayer-plugin-danmuku 插件开发。适合快速部署到个人博客、视频网站或本地使用，提供了视频播放、实时发送弹幕、弹幕数据动态加载等功能。
+**一个仿哔哩哔哩风格、基于 ArtPlayer.js 构建的现代化弹幕视频播放器，支持在线人数统计、动态弹幕系统、热度图与通知系统等高级功能，开箱即用，适合嵌入网站、博客与各类 Web 应用中。**
 
 ---
 
-## 🚀 主要特性
+## ✨ 功能亮点
 
-- 🎨 **现代化通知系统**：清晰、优雅地显示播放器的各种状态（成功、失败、加载中、信息通知）。
-- 📺 **弹幕功能全面支持**：发送弹幕时自定义颜色、位置（滚动、顶部、底部），实时显示。
-- 🔄 **动态弹幕加载**：支持通过 URL 参数加载不同的视频和弹幕文件，便于快速切换视频资源。
-- ⚙️ **自动创建弹幕库**：当用户播放的视频没有对应的弹幕文件时，自动在服务端创建一个新的 XML 弹幕文件。
-- 🚨 **完善的错误处理**：弹幕库创建或发送失败时，清晰提示用户错误原因。
-- 📱 **移动端自适应**：自动适配各种屏幕尺寸，支持移动端观看。
-
----
-
-## 📺 演示站点
-[https://player.oldbili.fun](https://player.oldbili.fun/?url=https://limeblogs.github.io/ubc2/vid/av14224600125.mp4&dmk=https://oldbili.github.io/dmku/%E2%80%9C%E4%B8%80%E6%BC%94%E4%B8%81%E7%9C%9F_%E4%BE%BF%E5%85%A5%E6%88%8F_%E5%BE%97%E5%A4%AA%E6%B7%B1%E2%80%9D%E2%80%94%E2%80%94%E4%B8%81%E7%9C%9F%E8%83%BD%E9%87%8F%E5%8D%95%E6%9B%B2%E3%80%8A%E7%BE%A4%E4%B8%81%E3%80%8B.26554729651.xml)
+- 📺 **弹幕全面支持**：发送弹幕时支持自定义颜色、位置（滚动 / 顶部 / 底部），支持实时展示。
+- 🔄 **响应式弹幕字号**：自动根据屏幕尺寸调整字体大小，优化桌面与移动端体验。
+- 📋 **弹幕列表面板**：可一键查看全部弹幕，包含发送时间、内容、时间点等。
+- 📡 **在线人数统计**：通过定时心跳机制记录用户在线状态，展示当前在线人数与互动热度图。
+- 🎨 **高颜值通知系统**：加载中、发送成功、失败提示等状态清晰美观。
+- ⚙️ **动态弹幕加载**：通过 URL 参数灵活加载不同视频与弹幕资源，支持无弹幕文件时自动创建。
+- 🚨 **前端安全提示**：防止恶意代码粘贴，提升安全性。
+- 📱 **移动端自适应**：支持不同设备访问，流畅切换。
 
 ---
 
 ## 🔧 技术栈
 
-- **ArtPlayer.js** - 现代化 HTML5 视频播放器库
-- **artplayer-plugin-danmuku** - ArtPlayer 弹幕插件
-- **HTML / CSS / JavaScript** - 前端基础技术栈
-- **PHP** - 后端处理弹幕存储（sendDanmu.php）
+- **ArtPlayer.js** - HTML5 视频播放器核心组件
+- **artplayer-plugin-danmuku** - 弹幕插件支持
+- **JavaScript + DOM 操作** - 实现 UI 控制与交互逻辑
+- **Fetch API** - 前后端数据交互（弹幕、在线统计）
+- **PHP** - 后端处理弹幕接收、XML 文件存储与在线人数计算
 
 ---
 
+## 📁 项目结构说明
 
-## 🛠️ 使用方法
+```
+project-root/
+├── index.html              // 播放器主页面
+├── sendDanmu.php           // 处理弹幕接收与存储
+├── online.php              // 在线人数统计接口
+├── online_users.xml        // 在线用户记录文件
+├── style/oldbiliplayer.css // 播放器自定义样式（可合并到 index.html）
+├── oldbiliplayer.js        // 前端逻辑控制（可合并到 index.html）
+```
+
+---
+
+## 🔌 快速使用
 
 ### 1. 克隆或下载项目
 
@@ -50,83 +53,104 @@
 git clone https://github.com/Dos7t3r/php-danmu-player
 ```
 
-### 2. 部署到服务器
+### 2. 部署到支持 PHP 的服务器
 
-将项目文件放置到 Web 服务器目录下，确保服务器支持 PHP。
+将文件部署到支持 PHP 的 Web 服务器（如 Apache/Nginx）。
 
-```
-- your-web-root/
-  ├── index.html
-  ├── sendDanmu.php
-```
+### 3. 设置播放器参数
 
-### 3. 配置播放器 URL 参数
-
-播放器通过 URL 参数自动加载视频和弹幕文件。
-
-- `url`：视频文件路径。
-- `dmk`：弹幕 XML 文件路径（可选，不指定则自动创建）。
-
-示例访问方式：
+访问方式示例：
 
 ```url
-https://your-domain.com/index.html?url=https://example.com/video.mp4&dmk=https://your-domain.com/dmk/danmu.xml
+https://your-domain.com/index.html?url=/path/to/video.mp4&dmk=/path/to/danmuku.xml&id=video001
 ```
 
+- `url`: 视频文件路径
+- `dmk`: 弹幕 XML 文件路径（可选，不填将自动创建）
+- `id`: 视频唯一标识（用于在线统计）
 
 ---
 
-## 📝 文件说明
-
-- `index.html`：播放器主页面，包含前端界面与逻辑。
-- `sendDanmu.php`：弹幕数据的后端接收与 XML 文件存储。
-
-
----
-
-## 🔑 后端接口说明
+## 📮 弹幕发送接口说明
 
 - 请求方式：`POST`
 - 内容类型：`application/json`
 
-### 请求参数示例：
+### 示例请求参数：
 
 ```json
 {
-    "dmkUrl": "/dmk/video.xml",
-    "text": "这是一条弹幕",
-    "time": 12.345,
-    "color": "#FF0000",
-    "mode": 0
+  "dmkUrl": "/dmk/video.xml",
+  "text": "这是一条弹幕",
+  "time": 12.345,
+  "color": "#FF0000",
+  "mode": 0
 }
 ```
 
-### 响应参数示例：
+### 响应示例：
+
+成功：
 
 ```json
-成功：{"success":true,"message":"弹幕发送成功"}
-失败：{"success":false,"message":"弹幕保存失败，权限不足"}
+{"success": true, "message": "弹幕发送成功"}
+```
+
+失败：
+
+```json
+{"success": false, "message": "弹幕保存失败，权限不足"}
 ```
 
 ---
 
-## 🎯 注意事项
+## 🖼️ 界面展示
 
-- 服务器端需开启 PHP 支持，并确保弹幕 XML 文件夹具有正确的读写权限。
-- 推荐使用 HTTPS 部署，避免弹幕数据传输过程中被篡改。
+
+![image](https://github.com/user-attachments/assets/8e06707a-76c7-43f9-942e-66b8cd53c1c1)
+---
+![image](https://github.com/user-attachments/assets/db70cd73-3e2c-4e38-9211-e8b016f020cc)
+
+播放器包含：
+
+- 视频播放区域
+- 自定义控制栏（弹幕开关、列表、全屏、快进等）
+- ![image](https://github.com/user-attachments/assets/3db7035d-9461-4ffb-9d67-1d890fb6409a)
+
+- 弹幕列表面板（可切换）
+- 在线人数统计与热度展示
+- ![image](https://github.com/user-attachments/assets/959830c0-3259-4a91-973b-08ea5bdd8932)
+
+- 通知反馈系统（状态提示）
+- 
+
+---
+
+## ⚠️ 注意事项
+
+- 请确保服务器开启 PHP 并配置文件夹读写权限。
+- 推荐使用 HTTPS 以保证数据传输安全。
+- 弹幕存储为 XML 格式，注意格式合法性与文件权限。
+- 控制台内置警告防止粘贴恶意脚本。
+
+---
+
+## 🧪 演示站点
+
+👉 [在线预览地址](https://player.oldbili.fun/?url=https://limeblogs.github.io/ubc2/vid/av14224600125.mp4&dmk=https://oldbili.github.io/dmku/%E2%80%9C%E4%B8%80%E6%BC%94%E4%B8%81%E7%9C%9F_%E4%BE%BF%E5%85%A5%E6%88%8F_%E5%BE%97%E5%A4%AA%E6%B7%B1%E2%80%9D%E2%80%94%E2%80%94%E4%B8%81%E7%9C%9F%E8%83%BD%E9%87%8F%E5%8D%95%E6%9B%B2%E3%80%8A%E7%BE%A4%E4%B8%81%E3%80%8B.26554729651.xml)
 
 ---
 
 ## 📜 开源协议
 
-本项目基于 MIT 协议开源，欢迎自由使用与二次开发。
+MIT License - 欢迎二次开发、修改与部署。
 
 ---
 
-## 💬 联系方式
+## 👥 开发团队
 
-如有任何问题或建议，欢迎提交 Issue 或 PR！
+- GitHub：[@oldbili](https://github.com/oldbili) / @nsty / @Dos7t3r(https://github.com/Dos7t3r) 
+- 协作工具：ChatGPT & [v0.dev](https://v0.dev)
 
-## 🧠 Tip
+---
 
-项目开发By ChatGPT & v0.dev
