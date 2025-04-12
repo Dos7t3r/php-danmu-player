@@ -40,7 +40,7 @@ project-root/
 ├── online.php              // 在线人数统计接口
 ├── online_users.xml        // 在线用户记录文件
 ├── style/oldbiliplayer.css // 播放器自定义样式（可合并到 index.html）
-├── oldbiliplayer.js        // 前端逻辑控制（可合并到 index.html）
+├── js/oldbiliplayer.js        // 前端逻辑控制（可合并到 index.html）
 ```
 
 ---
