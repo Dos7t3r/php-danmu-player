@@ -39,8 +39,8 @@ project-root/
 ├── sendDanmu.php           // 处理弹幕接收与存储
 ├── online.php              // 在线人数统计接口
 ├── online_users.xml        // 在线用户记录文件
-├── style/oldbiliplayer.css // 播放器自定义样式（可合并到 index.html）
-├── js/oldbiliplayer.js        // 前端逻辑控制（可合并到 index.html）
+├── style/player.css // 播放器自定义样式（可合并到 index.html）
+├── js/player.js        // 前端逻辑控制（可合并到 index.html）
 ```
 
 ---
