@@ -1,180 +1,121 @@
 <?php
 /**
- * 在线用户统计服务
- * 功能：记录在线用户、清理超时用户、返回当前在线人数
+ * 在线用户统计服务（使用 MySQL 数据库）
  */
+header("Access-Control-Allow-Origin: *");
+header('Content-Type: application/json');
 
-// 配置参数
-$config = [
-    'online_file' => 'online_users.xml',  // 在线用户XML文件
-    'timeout' => 120,                     // 超时时间（秒）
-    'clean_probability' => 10,            // 清理概率（百分比）
-    'video_id' => ''                      // 视频ID（可选，用于区分不同视频的在线用户）
+// 数据库配置（根据你的实际情况修改）
+$dbConfig = [
+    'host'     => 'localhost',
+    'dbname'   => 'database-name',
+    'username' => 'database-username',
+    'password' => 'database-pass',
+    'charset'  => 'utf8mb4'
 ];
 
-// 获取视频ID参数（如果提供）
-if (isset($_GET['video_id']) || isset($_POST['video_id'])) {
-    $config['video_id'] = isset($_GET['video_id']) ? $_GET['video_id'] : $_POST['video_id'];
+// 超时时间（秒）
+$timeout = 120;
+
+// 连接数据库（PDO方式）
+try {
+    $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
+    $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+} catch (PDOException $e) {
+    die(json_encode(['success' => false, 'error' => 'Database connection failed']));
 }
 
-// 如果有视频ID，则使用特定的XML文件
-if (!empty($config['video_id'])) {
-    $config['online_file'] = 'online_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $config['video_id']) . '.xml';
-}
+// 获取请求参数
+$action = $_GET['action'] ?? 'heartbeat';
+$video_id = $_POST['video_id'] ?? $_GET['video_id'] ?? '';
+$user_id = $_POST['user_id'] ?? $_COOKIE['online_user_id'] ?? '';
 
-// 确保XML文件存在
-if (!file_exists($config['online_file'])) {
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    $root = $dom->createElement('online_users');
-    $dom->appendChild($root);
-    $dom->formatOutput = true;
-    $dom->save($config['online_file']);
-    chmod($config['online_file'], 0666); // 确保文件可写
-}
-
-// 处理请求
-$action = isset($_GET['action']) ? $_GET['action'] : 'heartbeat';
-
+// 根据动作执行对应功能
 switch ($action) {
     case 'heartbeat':
-        handleHeartbeat($config);
+        handleHeartbeat($pdo, $user_id, $video_id, $timeout);
         break;
+
     case 'count':
-        getOnlineCount($config);
+        getOnlineCount($pdo, $video_id, $timeout);
         break;
+
     default:
-        echo json_encode(['error' => 'Invalid action']);
+        echo json_encode(['success' => false, 'error' => 'Invalid action']);
         break;
 }
 
-/**
- * 处理心跳请求
- */
-function handleHeartbeat($config) {
-    // 获取用户ID，如果没有则生成新ID
-    $userId = isset($_POST['user_id']) ? $_POST['user_id'] : '';
-    if (empty($userId)) {
-        $userId = isset($_COOKIE['online_user_id']) ? $_COOKIE['online_user_id'] : '';
-    }
-    if (empty($userId)) {
-        $userId = generateUserId();
-        // 设置cookie，有效期30天
-        setcookie('online_user_id', $userId, time() + 86400 * 30, '/');
+// 心跳处理函数
+function handleHeartbeat($pdo, $user_id, $video_id, $timeout) {
+    if (empty($user_id)) {
+        $user_id = generateUserId();
+        setcookie('online_user_id', $user_id, time() + 86400 * 30, '/');
     }
 
-    // 更新用户状态
-    updateUserStatus($userId, $config);
+    // 插入或更新用户最后活跃时间
+    $stmt = $pdo->prepare("
+        INSERT INTO `online_users` (`user_id`, `video_id`, `last_active`)
+        VALUES (:user_id, :video_id, NOW())
+        ON DUPLICATE KEY UPDATE `last_active` = NOW(), `video_id` = :video_id
+    ");
+    $stmt->execute(['user_id' => $user_id, 'video_id' => $video_id]);
 
-    // 随机清理过期用户
-    if (mt_rand(1, 100) <= $config['clean_probability']) {
-        cleanExpiredUsers($config);
-    }
+    // 清理过期用户
+    cleanExpiredUsers($pdo, $timeout);
 
-    // 获取当前在线人数
-    $count = countOnlineUsers($config);
+    // 返回当前人数
+    $count = countOnlineUsers($pdo, $video_id, $timeout);
 
-    // 返回结果
     echo json_encode([
         'success' => true,
-        'user_id' => $userId,
+        'user_id' => $user_id,
         'count' => $count
     ]);
 }
 
-/**
- * 获取在线人数
- */
-function getOnlineCount($config) {
-    // 随机清理过期用户
-    if (mt_rand(1, 100) <= $config['clean_probability']) {
-        cleanExpiredUsers($config);
-    }
-
-    // 获取当前在线人数
-    $count = countOnlineUsers($config);
-
-    // 返回结果
+// 获取当前在线人数
+function getOnlineCount($pdo, $video_id, $timeout) {
+    cleanExpiredUsers($pdo, $timeout);
+    $count = countOnlineUsers($pdo, $video_id, $timeout);
     echo json_encode([
         'success' => true,
         'count' => $count
     ]);
 }
 
-/**
- * 生成唯一用户ID
- */
+// 清理超时用户
+function cleanExpiredUsers($pdo, $timeout) {
+    $stmt = $pdo->prepare("
+        DELETE FROM `online_users` 
+        WHERE `last_active` < (NOW() - INTERVAL :timeout SECOND)
+    ");
+    $stmt->execute(['timeout' => $timeout]);
+}
+
+// 统计当前在线人数
+function countOnlineUsers($pdo, $video_id, $timeout) {
+    if (!empty($video_id)) {
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM `online_users`
+            WHERE `video_id` = :video_id
+            AND `last_active` >= (NOW() - INTERVAL :timeout SECOND)
+        ");
+        $stmt->execute(['video_id' => $video_id, 'timeout' => $timeout]);
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM `online_users`
+            WHERE `last_active` >= (NOW() - INTERVAL :timeout SECOND)
+        ");
+        $stmt->execute(['timeout' => $timeout]);
+    }
+
+    return (int)$stmt->fetchColumn();
+}
+
+// 生成唯一用户ID
 function generateUserId() {
     return md5(uniqid(mt_rand(), true));
-}
-
-/**
- * 更新用户状态
- */
-function updateUserStatus($userId, $config) {
-    $dom = new DOMDocument();
-    $dom->load($config['online_file']);
-    $root = $dom->documentElement;
-
-    // 查找用户节点
-    $userNode = null;
-    $users = $root->getElementsByTagName('user');
-    foreach ($users as $user) {
-        if ($user->getAttribute('id') === $userId) {
-            $userNode = $user;
-            break;
-        }
-    }
-
-    // 如果用户不存在，创建新节点
-    if ($userNode === null) {
-        $userNode = $dom->createElement('user');
-        $userNode->setAttribute('id', $userId);
-        $root->appendChild($userNode);
-    }
-
-    // 更新最后活动时间
-    $userNode->setAttribute('last_active', time());
-
-    // 保存XML
-    $dom->save($config['online_file']);
-}
-
-/**
- * 清理过期用户
- */
-function cleanExpiredUsers($config) {
-    $dom = new DOMDocument();
-    $dom->load($config['online_file']);
-    $root = $dom->documentElement;
-
-    $users = $root->getElementsByTagName('user');
-    $currentTime = time();
-    $nodesToRemove = [];
-
-    // 找出过期的用户节点
-    for ($i = 0; $i < $users->length; $i++) {
-        $user = $users->item($i);
-        $lastActive = (int)$user->getAttribute('last_active');
-        if ($currentTime - $lastActive > $config['timeout']) {
-            $nodesToRemove[] = $user;
-        }
-    }
-
-    // 移除过期节点
-    foreach ($nodesToRemove as $node) {
-        $root->removeChild($node);
-    }
-
-    // 保存XML
-    $dom->save($config['online_file']);
-}
-
-/**
- * 统计在线用户数
- */
-function countOnlineUsers($config) {
-    $dom = new DOMDocument();
-    $dom->load($config['online_file']);
-    $users = $dom->documentElement->getElementsByTagName('user');
-    return $users->length;
 }
