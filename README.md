@@ -142,9 +142,11 @@ https://your-domain.com/index.html?url=/path/to/video.mp4&dmk=/path/to/danmuku.x
 播放器特色：
 
 - 自定义控制栏（弹幕开关、列表、全屏、快进）
--
+-![image](https://github.com/user-attachments/assets/be70efba-5db4-432f-a440-f0b6d93b1a8f)
+
 - 在线人数统计与热度图
--
+-![image](https://github.com/user-attachments/assets/9e57105d-9977-4f1b-b6e7-2adcea6ed21e)
+
 
 ---
 
