@@ -2,7 +2,7 @@
 
 # 🎥 OldBili Player v1.3.4 - PHP + MySQL 增强版弹幕播放器
 
-** 一个仿哔哩哔哩风格、基于 ArtPlayer.js 构建的现代化弹幕视频播放器，现已全面升级为 MySQL 数据库存储在线用户数据，更稳定、更高效，适合嵌入网站、博客与各类 Web 应用中。**
+**一个仿哔哩哔哩风格、基于 ArtPlayer.js 构建的现代化弹幕视频播放器，现已全面升级为 MySQL 数据库存储在线用户数据，更稳定、更高效，适合嵌入网站、博客与各类 Web 应用中。**
 
 ---
 
@@ -137,14 +137,14 @@ https://your-domain.com/index.html?url=/path/to/video.mp4&dmk=/path/to/danmuku.x
 
 ## 🖼️ 界面展示
 
-![播放器主界面](https://github.com/user-attachments/assets/8e06707a-76c7-43f9-942e-66b8cd53c1c1)
+
 
 播放器特色：
 
 - 自定义控制栏（弹幕开关、列表、全屏、快进）
-- ![弹幕列表面板](https://github.com/user-attachments/assets/db70cd73-3e2c-4e38-9211-e8b016f020cc)
+-
 - 在线人数统计与热度图
-- ![通知反馈系统](https://github.com/user-attachments/assets/959830c0-3259-4a91-973b-08ea5bdd8932)
+-
 
 ---
 
@@ -157,7 +157,7 @@ https://your-domain.com/index.html?url=/path/to/video.mp4&dmk=/path/to/danmuku.x
 
 ## 🧪 演示站点
 
-👉 [在线预览地址](https://player.oldbili.fun/?url=https://limeblogs.github.io/ubc2/vid/av14224600125.mp4&dmk=https://oldbili.github.io/dmku/%E2%80%9C%E4%B8%80%E6%BC%94%E4%B8%81%E7%9C%9F_%E4%BE%BF%E5%85%A5%E6%88%8F_%E5%BE%97%E5%A4%AA%E6%B7%B1%E2%80%9D%E2%80%94%E2%80%94%E4%B8%81%E7%9C%9F%E8%83%BD%E9%87%8F%E5%8D%95%E6%9B%B2%E3%80%8A%E7%BE%A4%E4%B8%81%E3%80%8B.26554729651.xml)
+👉 [在线预览地址](https://player.oldbili.fun/?url=https://limeblogs.github.io/ubc2/vid/av14224600125.mp4\&dmk=https://oldbili.github.io/dmku/%E2%80%9C%E4%B8%80%E6%BC%94%E4%B8%81%E7%9C%9F_%E4%BE%BF%E5%85%A5%E6%88%8F_%E5%BE%97%E5%A4%AA%E6%B7%B1%E2%80%9D%E2%80%94%E2%80%94%E4%B8%81%E7%9C%9F%E8%83%BD%E9%87%8F%E5%8D%95%E6%9B%B2%E3%80%8A%E7%BE%A4%E4%B8%81%E3%80%8B.26554729651.xml)
 
 ---
 
