@@ -1,5 +1,6 @@
 
 # 🎥 OldBili Player v1.3.4 - PHP + MySQL 增强版弹幕播放器 
+![image](https://github.com/user-attachments/assets/61fdc1f9-e3ec-4e55-a326-d2284b3e10e1)
 
 🔴 v1.3.4 现已全面升级为 MySQL 数据库存储在线用户数据，更稳定、更高效，应对高并发能力更强，适合嵌入网站、博客与各类 Web 应用中。<br>
 🔴 预计下个版本v2.0.0将会全面使用SQL 如果你还想使用纯XML 请使用v1.3.4以前的版本<br>
