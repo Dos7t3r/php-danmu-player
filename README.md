@@ -3,7 +3,7 @@
 ![image](https://github.com/user-attachments/assets/61fdc1f9-e3ec-4e55-a326-d2284b3e10e1)
 
 🔴 v1.3.4 现已全面升级为 MySQL 数据库存储在线用户数据，更稳定、更高效，应对高并发能力更强，适合嵌入网站、博客与各类 Web 应用中。<br>
-🔴 预计下个版本v2.0.0将会全面使用SQL 如果你还想使用纯XML 请使用v1.3.4以前的版本<br>
+🔴 v2.0.0 版本已完成开发 使用ThinkPHp框架 全面使用SQL（开源计划中）如果你还想使用纯XML 请使用v1.3.4以前的版本<br>
 🔴 更新时间待定 
 
 一个仿哔哩哔哩风格、基于 ArtPlayer.js 构建的现代化弹幕视频播放器 
