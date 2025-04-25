@@ -1,0 +1,39 @@
+{
+  "name": "oldbili/player",
+  "description": "OldBili Player v2.0.0 - ThinkPHP Edition",
+  "type": "project",
+  "keywords": ["oldbili", "player", "danmaku"],
+  "homepage": "https://github.com/oldbili/oldbiliplayer",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "OldBili Team",
+      "email": "contact@oldbili.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.2.5",
+    "topthink/framework": "^6.0.0",
+    "topthink/think-orm": "^2.0",
+    "topthink/think-view": "^1.0",
+    "firebase/php-jwt": "^6.10"
+  },
+  "require-dev": {
+    "symfony/var-dumper": "^4.2",
+    "topthink/think-trace": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "app\\": "app"
+    },
+    "psr-0": {
+      "": "extend/"
+    }
+  },
+  "config": {
+    "preferred-install": "dist"
+  },
+  "scripts": {
+    "post-autoload-dump": ["@php think service:discover", "@php think vendor:publish"]
+  }
+}
