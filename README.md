@@ -16,8 +16,9 @@
 1. 将项目文件上传到服务器
 2. 配置数据库连接（.env文件）
 3. 运行安装脚本：`php think install`
-4. 访问管理后台：`http://您的域名/admin`
-5. 默认管理员账号：admin，密码：admin123
+4. 安装composer（推荐使用宝塔的composer，选择composer.json即可）
+5. 访问管理后台：`http://您的域名/admin`
+6. 默认管理员账号：admin，密码：admin123 （如果无法访问请使用fuck.php强制重设密码）
 
 ## 目录结构
 
@@ -42,5 +43,6 @@ project/
 在部署到生产环境前，请删除以下测试/开发文件：
 - migration.php
 - install.php（安装完成后）
+- fuck.php
 
 确保修改默认管理员密码，并设置适当的文件权限。
