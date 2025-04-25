@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OldBili Player | 弹幕管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <style>
+        .content-wrapper {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+        .card {
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .btn-primary:hover {
+            background-color: #5a6edb;
+            border-color: #5a6edb;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+        .danmaku-text {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .danmaku-color-preview {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .danmaku-mode {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: white;
+        }
+        .mode-scroll {
+            background-color: #28a745;
+        }
+        .mode-top {
+            background-color: #17a2b8;
+        }
+        .mode-bottom {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .video-info {
+            background-color: rgba(0,0,0,0.03);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .video-info h5 {
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: 10px;
+        }
+        .video-info dl {
+            margin-bottom: 0;
+        }
+        .video-info dt {
+            font-weight: 500;
+        }
+        .video-info dd {
+            margin-bottom: 8px;
+        }
+        .search-box {
+            position: relative;
+        }
+        .search-box .form-control {
+            padding-right: 35px;
+        }
+        .search-box .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+        .time-link {
+            cursor: pointer;
+            color: #007bff;
+        }
+        .time-link:hover {
+            text-decoration: underline;
+        }
+        .pagination {
+            margin-bottom: 0;
+        }
+        #danmakuTable tbody tr:hover {
+            background-color: rgba(0,0,0,0.03);
+        }
+        /* 新增样式 */
+        .embed-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .refresh-player {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        .refresh-player:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <!-- Left navbar links -->
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="/" class="nav-link">首页</a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="/admin/profile" class="nav-link">个人资料</a>
+            </li>
+        </ul>
+
+        <!-- Right navbar links -->
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/logout" role="button" title="退出登录">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <!-- /.navbar -->
+
+    <!-- Main Sidebar Container -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <!-- Brand Logo -->
+        <a href="/admin/index" class="brand-link">
+            <span class="brand-text font-weight-light">OldBili Player</span>
+            <span class="float-right badge badge-success">v2.0</span>
+        </a>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Sidebar user panel (optional) -->
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <i class="fas fa-user-circle fa-2x text-info"></i>
+                </div>
+                <div class="info">
+                    <a href="/admin/profile" class="d-block">{$Think.session.admin.nickname}</a>
+                </div>
+            </div>
+
+            <!-- Sidebar Menu -->
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                    <li class="nav-item">
+                        <a href="/admin/index" class="nav-link">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>控制面板</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/videos" class="nav-link active">
+                            <i class="nav-icon fas fa-video"></i>
+                            <p>视频管理</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/importXml" class="nav-link">
+                            <i class="nav-icon fas fa-file-import"></i>
+                            <p>导入XML弹幕</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/onlineUsers" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>在线用户</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/settings" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <p>系统设置</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/logs" class="nav-link">
+                            <i class="nav-icon fas fa-history"></i>
+                            <p>操作日志</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/profile" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <p>个人资料</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/logout" class="nav-link">
+                            <i class="nav-icon fas fa-sign-out-alt"></i>
+                            <p>退出登录</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- /.sidebar-menu -->
+        </div>
+        <!-- /.sidebar -->
+    </aside>
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">弹幕管理</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/admin/index">首页</a></li>
+                            <li class="breadcrumb-item"><a href="/admin/videos">视频管理</a></li>
+                            <li class="breadcrumb-item active">弹幕管理</li>
+                        </ol>
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+            </div><!-- /.container-fluid -->
+        </div>
+        <!-- /.content-header -->
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <!-- 视频信息 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-video mr-1"></i>
+                                    视频信息
+                                </h3>
+                                <div class="card-tools">
+                                    <a href="/?obv={$video.id}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fas fa-play"></i> 播放视频
+                                    </a>
+                                </div>
+                            </div>
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <!-- 修改视频预览部分，将原生video标签替换为iframe嵌入播放器 -->
+<div class="row">
+    <!-- 添加刷新按钮到视频预览区域 -->
+<div class="col-md-8">
+    <!-- 替换原来的video标签为iframe嵌入播放器 -->
+    <div class="embed-responsive embed-responsive-16by9 position-relative">
+        <button type="button" class="refresh-player" id="refreshPlayer" title="刷新播放器">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+        <iframe class="embed-responsive-item" src="/?obv={$video.id}&admin=1" allowfullscreen id="videoPreview"></iframe>
+    </div>
+    <div class="mt-2 text-muted small">
+        <i class="fas fa-info-circle"></i> 提示：点击弹幕列表中的时间点可跳转到对应位置，删除弹幕后可点击刷新按钮更新播放器
+    </div>
+</div>
+    <div class="col-md-4">
+        <div class="video-info">
+            <h5>{$video.title}</h5>
+            <dl class="row">
+                <dt class="col-sm-4">视频ID</dt>
+                <dd class="col-sm-8">{$video.id}</dd>
+                
+                <dt class="col-sm-4">播放次数</dt>
+                <dd class="col-sm-8">{$video.play_count|default='0'}</dd>
+                
+                <dt class="col-sm-4">弹幕数量</dt>
+                <dd class="col-sm-8">{:count($danmakuList)}</dd>
+                
+                <dt class="col-sm-4">状态</dt>
+                <dd class="col-sm-8">
+                    {if $video.status == 1}
+                        <span class="badge badge-success">启用</span>
+                    {else/}
+                        <span class="badge badge-danger">禁用</span>
+                    {/if}
+                </dd>
+                
+                <dt class="col-sm-4">添加时间</dt>
+                <dd class="col-sm-8">{$video.create_time|default=''}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+
+                        <!-- 弹幕列表 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-comment-dots mr-1"></i>
+                                    弹幕列表
+                                </h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-sm btn-danger" id="clearAllBtn">
+                                        <i class="fas fa-trash-alt"></i> 清空所有弹幕
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control" id="searchInput" placeholder="搜索弹幕内容...">
+                                            <span class="search-icon"><i class="fas fa-search"></i></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="btn-group float-right">
+                                            <button type="button" class="btn btn-default" id="filterAll">全部</button>
+                                            <button type="button" class="btn btn-default" id="filterScroll">滚动弹幕</button>
+                                            <button type="button" class="btn btn-default" id="filterTop">顶部弹幕</button>
+                                            <button type="button" class="btn btn-default" id="filterBottom">底部弹幕</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="danmakuTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px">ID</th>
+                                                <th style="width: 100px">时间点</th>
+                                                <th>弹幕内容</th>
+                                                <th style="width: 80px">模式</th>
+                                                <th style="width: 80px">颜色</th>
+                                                <th style="width: 150px">发送时间</th>
+                                                <th style="width: 100px">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {empty name="danmakuList"}
+                                                <tr>
+                                                    <td colspan="7" class="text-center">暂无弹幕数据</td>
+                                                </tr>
+                                            {else/}
+                                                {volist name="danmakuList" id="danmaku"}
+                                                    <tr data-id="{$danmaku.id}" data-mode="{$danmaku.mode}">
+                                                        <td>{$danmaku.id}</td>
+                                                        <td>
+                                                            <span class="time-link" data-time="{$danmaku.time}">
+                                                                {$danmaku.time|number_format=2}秒
+                                                            </span>
+                                                        </td>
+                                                        <td class="danmaku-text" title="{$danmaku.text}">{$danmaku.text}</td>
+                                                        <td>
+                                                            {switch name="danmaku.mode"}
+                                                                {case value="0"}
+                                                                    <span class="danmaku-mode mode-scroll">滚动</span>
+                                                                {/case}
+                                                                {case value="1"}
+                                                                    <span class="danmaku-mode mode-top">顶部</span>
+                                                                {/case}
+                                                                {case value="2"}
+                                                                    <span class="danmaku-mode mode-bottom">底部</span>
+                                                                {/case}
+                                                                {default /}
+                                                                    <span class="danmaku-mode mode-scroll">滚动</span>
+                                                            {/switch}
+                                                        </td>
+                                                        <td>
+                                                            <span class="danmaku-color-preview" style="background-color: {$danmaku.color};"></span>
+                                                            {$danmaku.color}
+                                                        </td>
+                                                        <td>
+                                                            {if $danmaku.timestamp}
+                                                                {:date('Y-m-d H:i:s', $danmaku.timestamp/1000)}
+                                                            {else/}
+                                                                {:date('Y-m-d H:i:s', strtotime($danmaku.created_at))}
+                                                            {/if}
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-xs btn-danger delete-btn" data-id="{$danmaku.id}">
+                                                                <i class="fas fa-trash"></i> 删除
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                {/volist}
+                                            {/empty}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- /.card-body -->
+                            <div class="card-footer clearfix">
+                                <div class="float-left">
+                                    共 <span id="totalCount">{:count($danmakuList)}</span> 条弹幕
+                                </div>
+                                <div class="float-right">
+                                    <a href="/admin/importXml" class="btn btn-primary">
+                                        <i class="fas fa-file-import"></i> 导入XML弹幕
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                </div>
+                <!-- /.row -->
+            </div><!--/. container-fluid -->
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <!-- Main Footer -->
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2023-2024 <a href="https://github.com/oldbili/oldbiliplayer">OldBili Player</a>.</strong>
+        All rights reserved.
+        <div class="float-right d-none d-sm-inline-block">
+            <b>Version</b> 2.0.0
+        </div>
+    </footer>
+</div>
+<!-- ./wrapper -->
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">确认删除</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                确定要删除这条弹幕吗？此操作不可恢复！
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear All Confirmation Modal -->
+<div class="modal fade" id="clearAllModal" tabindex="-1" role="dialog" aria-labelledby="clearAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clearAllModalLabel">确认清空</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 警告：此操作将删除该视频的所有弹幕数据，且不可恢复！
+                </div>
+                <p>确定要清空视频 <strong>{$video.title}</strong> (ID: {$video.id}) 的所有弹幕吗？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmClearAll">确认清空</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- REQUIRED SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+<!-- 添加刷新播放器的JavaScript代码 -->
+<script>
+$(function() {
+    // 视频播放器iframe
+    const videoPreview = document.getElementById('videoPreview');
+    
+    // 刷新播放器
+    $('#refreshPlayer').on('click', function() {
+        if (videoPreview) {
+            const currentSrc = videoPreview.src;
+            videoPreview.src = currentSrc.split('&t=')[0] + '&t=' + Math.random();
+        }
+    });
+    
+    // 点击时间链接，跳转到视频对应时间点
+    $('.time-link').on('click', function() {
+        const time = $(this).data('time');
+        if (videoPreview && videoPreview.contentWindow) {
+            // 尝试使用postMessage与iframe中的播放器通信
+            videoPreview.contentWindow.postMessage({
+                action: 'seekTo',
+                time: time
+            }, '*');
+            
+            // 备用方法：重新加载iframe并添加时间参数
+            if (videoPreview.src.indexOf('&t=') > -1) {
+                videoPreview.src = videoPreview.src.replace(/&t=\d+(\.\d+)?/, `&t=${time}`);
+            } else {
+                videoPreview.src = videoPreview.src + `&t=${time}`;
+            }
+        }
+    });
+    
+    // 删除单条弹幕
+    let deleteId = 0;
+    $('.delete-btn').on('click', function() {
+        deleteId = $(this).data('id');
+        $('#deleteModal').modal('show');
+    });
+    
+    // 确认删除弹幕
+    $('#confirmDelete').on('click', function() {
+        if (deleteId > 0) {
+            $.ajax({
+                url: '/admin/deleteDanmaku',
+                type: 'post',
+                data: {
+                    video_id: {$video.id},
+                    danmaku_id: deleteId
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.code === 1) {
+                        // 删除成功，移除对应行
+                        $(`tr[data-id="${deleteId}"]`).fadeOut(300, function() {
+                            $(this).remove();
+                            // 更新计数
+                            updateTotalCount();
+                        });
+                        alert(res.msg);
+                    } else {
+                        alert(res.msg);
+                    }
+                },
+                error: function() {
+                    alert('请求失败，请稍后重试');
+                },
+                complete: function() {
+                    $('#deleteModal').modal('hide');
+                }
+            });
+        }
+    });
+    
+    // 清空所有弹幕
+    $('#clearAllBtn').on('click', function() {
+        $('#clearAllModal').modal('show');
+    });
+    
+    // 确认清空所有弹幕
+    $('#confirmClearAll').on('click', function() {
+        $.ajax({
+            url: '/admin/clearDanmaku',
+            type: 'post',
+            data: {
+                video_id: {$video.id}
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 1) {
+                    // 清空成功，刷新页面
+                    alert(res.msg);
+                    location.reload();
+                } else {
+                    alert(res.msg);
+                }
+            },
+            error: function() {
+                alert('请求失败，请稍后重试');
+            },
+            complete: function() {
+                $('#clearAllModal').modal('hide');
+            }
+        });
+    });
+    
+    // 搜索功能
+    $('#searchInput').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $("#danmakuTable tbody tr").filter(function() {
+            const text = $(this).find('.danmaku-text').text().toLowerCase();
+            $(this).toggle(text.indexOf(value) > -1);
+        });
+        updateTotalCount();
+    });
+    
+    // 筛选功能
+    $('#filterAll').on('click', function() {
+        $("#danmakuTable tbody tr").show();
+        setActiveFilter($(this));
+        updateTotalCount();
+    });
+    
+    $('#filterScroll').on('click', function() {
+        filterByMode(0, $(this));
+    });
+    
+    $('#filterTop').on('click', function() {
+        filterByMode(1, $(this));
+    });
+    
+    $('#filterBottom').on('click', function() {
+        filterByMode(2, $(this));
+    });
+    
+    // 设置激活的筛选按钮
+    function setActiveFilter(button) {
+        $('.btn-group .btn').removeClass('active btn-primary').addClass('btn-default');
+        button.removeClass('btn-default').addClass('active btn-primary');
+    }
+    
+    // 按模式筛选
+    function filterByMode(mode, button) {
+        $("#danmakuTable tbody tr").hide();
+        $(`#danmakuTable tbody tr[data-mode="${mode}"]`).show();
+        setActiveFilter(button);
+        updateTotalCount();
+    }
+    
+    // 更新显示的总数
+    function updateTotalCount() {
+        const visibleCount = $("#danmakuTable tbody tr:visible").length;
+        $('#totalCount').text(visibleCount);
+    }
+    
+    // 默认激活"全部"筛选
+    $('#filterAll').addClass('active btn-primary').removeClass('btn-default');
+});
+</script>
+</body>
+</html>
