@@ -22,7 +22,7 @@
 
 ## 目录结构
 
-\`\`\`
+```
 project/
 ├── app/                    # 应用目录
 │   ├── controller/         # 控制器
@@ -36,7 +36,7 @@ project/
 │   └── index.php           # 入口文件
 ├── route/                  # 路由配置
 └── vendor/                 # Composer依赖
-\`\`\`
+```
 
 ## 生产环境注意事项
 
