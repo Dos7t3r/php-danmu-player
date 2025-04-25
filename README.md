@@ -2,6 +2,25 @@
 
 基于ThinkPHP 6 + AdminLTE 3的OldBili Player管理系统，提供美观的UI和增强的安全性。
 
+## 预览
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/0e94a0bf-6e84-4854-b611-cf20cab168b3" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/e6171ce5-780a-4d4e-b186-89ce9c4744bc" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/63b40347-67c8-4a00-b35c-c3b6f40a59da" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/8f058e01-a135-40ae-bbd4-3bac097b0cfa" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/1e41527c-bcfa-4994-9b12-0632e1606bcb" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/135827d4-352c-41f4-95bf-42322f4b1d3b" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/e03f6f21-4723-4755-8735-9036182b67f2" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/d1cdd30f-7bd1-4e9e-aeee-ac07965db8ef" />
+
+
+
+
+
+
+
+![image](https://github.com/user-attachments/assets/dcd54fab-0cf3-48f4-bc0d-0401a5bce9d6)
+
+
 ## 特性
 
 - 基于ThinkPHP 6框架，代码结构清晰
