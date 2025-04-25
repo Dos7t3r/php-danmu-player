@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OldBili Player | 导入XML弹幕</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <style>
+        .content-wrapper {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+        .card {
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .custom-file-label::after {
+            content: "浏览";
+        }
+        .progress {
+            height: 20px;
+            margin-top: 10px;
+            display: none;
+        }
+        .progress-bar {
+            background-color: #667eea;
+        }
+        .xml-file-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .xml-file-item:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <!-- Left navbar links -->
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="/" class="nav-link">首页</a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="/admin/profile" class="nav-link">个人资料</a>
+            </li>
+        </ul>
+
+        <!-- Right navbar links -->
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/logout" role="button" title="退出登录">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <!-- /.navbar -->
+
+    <!-- Main Sidebar Container -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <!-- Brand Logo -->
+        <a href="/admin/index" class="brand-link">
+            <span class="brand-text font-weight-light">OldBili Player</span>
+            <span class="float-right badge badge-success">v2.0</span>
+        </a>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Sidebar user panel (optional) -->
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <i class="fas fa-user-circle fa-2x text-info"></i>
+                </div>
+                <div class="info">
+                    <a href="/admin/profile" class="d-block">{$Think.session.admin.nickname}</a>
+                </div>
+            </div>
+
+            <!-- Sidebar Menu -->
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                    <li class="nav-item">
+                        <a href="/admin/index" class="nav-link">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>控制面板</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/videos" class="nav-link">
+                            <i class="nav-icon fas fa-video"></i>
+                            <p>视频管理</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/importXml" class="nav-link active">
+                            <i class="nav-icon fas fa-file-import"></i>
+                            <p>导入XML弹幕</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/onlineUsers" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>在线用户</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/settings" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <p>系统设置</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/logs" class="nav-link">
+                            <i class="nav-icon fas fa-history"></i>
+                            <p>操作日志</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/profile" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <p>个人资料</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/logout" class="nav-link">
+                            <i class="nav-icon fas fa-sign-out-alt"></i>
+                            <p>退出登录</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- /.sidebar-menu -->
+        </div>
+        <!-- /.sidebar -->
+    </aside>
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">导入XML弹幕</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/admin/index">首页</a></li>
+                            <li class="breadcrumb-item active">导入XML弹幕</li>
+                        </ol>
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+            </div><!-- /.container-fluid -->
+        </div>
+        <!-- /.content-header -->
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <!-- 上传XML文件 -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-upload mr-1"></i>
+                                    上传XML文件
+                                </h3>
+                            </div>
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <form id="uploadForm" enctype="multipart/form-data">
+                                    <div class="form-group">
+                                        <label for="xmlFile">选择XML文件</label>
+                                        <div class="input-group">
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="xmlFile" name="file" accept=".xml">
+                                                <label class="custom-file-label" for="xmlFile">选择文件</label>
+                                            </div>
+                                            <div class="input-group-append">
+                                                <button type="submit" class="btn btn-primary">上传</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <small class="form-text text-muted">支持的文件格式: XML</small>
+                                </form>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+
+                        <!-- 可用XML文件列表 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-list mr-1"></i>
+                                    可用XML文件
+                                </h3>
+                            </div>
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                {empty name="xmlFiles"}
+                                    <p class="text-center">暂无XML文件</p>
+                                {else/}
+                                    <div class="xml-file-list">
+                                        {volist name="xmlFiles" id="file"}
+                                            <div class="xml-file-item d-flex justify-content-between align-items-center">
+                                                <span><i class="fas fa-file-code mr-2"></i>{$file}</span>
+                                                <button type="button" class="btn btn-sm btn-info select-xml" data-file="{$file}">选择</button>
+                                            </div>
+                                        {/volist}
+                                    </div>
+                                {/empty}
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.col -->
+
+                    <!-- 导入弹幕 -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-file-import mr-1"></i>
+                                    导入弹幕
+                                </h3>
+                            </div>
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <form id="importForm">
+                                    <div class="form-group">
+                                        <label for="videoId">选择视频</label>
+                                        <select class="form-control" id="videoId" name="video_id" required>
+                                            <option value="">-- 请选择视频 --</option>
+                                            {volist name="videos" id="video"}
+                                                <option value="{$video.id}">{$video.id} - {$video.title}</option>
+                                            {/volist}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="xmlFile">XML文件</label>
+                                        <input type="text" class="form-control" id="selectedXmlFile" name="xml_file" readonly required>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="custom-control custom-checkbox">
+                                            <input class="custom-control-input" type="checkbox" id="clearExisting" name="clear_existing" value="1" checked>
+                                            <label for="clearExisting" class="custom-control-label">清空现有弹幕</label>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">开始导入</button>
+                                </form>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+
+                        <!-- 导入结果 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    导入结果
+                                </h3>
+                            </div>
+                            <!-- /.card-header -->
+                            <div class="card-body">
+                                <div id="importResult">
+                                    <p class="text-center text-muted">尚未执行导入操作</p>
+                                </div>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.col -->
+                </div>
+                <!-- /.row -->
+            </div><!--/. container-fluid -->
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <!-- Main Footer -->
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2023-2024 <a href="https://github.com/oldbili/oldbiliplayer">OldBili Player</a>.</strong>
+        All rights reserved.
+        <div class="float-right d-none d-sm-inline-block">
+            <b>Version</b> 2.0.0
+        </div>
+    </footer>
+</div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input@1.3.4/dist/bs-custom-file-input.min.js"></script>
+<script>
+$(function() {
+    // 初始化自定义文件输入
+    bsCustomFileInput.init();
+    
+    // 上传XML文件
+    $('#uploadForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = new FormData(this);
+        var fileInput = $('#xmlFile')[0];
+        
+        if (fileInput.files.length === 0) {
+            alert('请选择要上传的XML文件');
+            return;
+        }
+        
+        var file = fileInput.files[0];
+        if (!file.name.toLowerCase().endsWith('.xml')) {
+            alert('请选择XML格式的文件');
+            return;
+        }
+        
+        // 显示进度条
+        $('.progress').show();
+        
+        $.ajax({
+            url: '/admin/uploadXml',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        var percent = Math.round((e.loaded / e.total) * 100);
+                        $('.progress-bar').css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
+                    }
+                });
+                return xhr;
+            },
+            success: function(res) {
+                if (res.code === 1) {
+                    alert('文件上传成功');
+                    // 刷新页面以显示新上传的文件
+                    location.reload();
+                } else {
+                    alert('上传失败: ' + res.msg);
+                }
+            },
+            error: function() {
+                alert('上传请求失败，请稍后重试');
+            },
+            complete: function() {
+                // 重置进度条
+                setTimeout(function() {
+                    $('.progress').hide();
+                    $('.progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+                }, 1000);
+            }
+        });
+    });
+    
+    // 选择XML文件
+    $('.select-xml').on('click', function() {
+        var fileName = $(this).data('file');
+        $('#selectedXmlFile').val(fileName);
+    });
+    
+    // 导入弹幕
+    $('#importForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var videoId = $('#videoId').val();
+        var xmlFile = $('#selectedXmlFile').val();
+        
+        if (!videoId) {
+            alert('请选择视频');
+            return;
+        }
+        
+        if (!xmlFile) {
+            alert('请选择XML文件');
+            return;
+        }
+        
+        $('#importResult').html('<p class="text-center"><i class="fas fa-spinner fa-spin mr-2"></i>正在导入，请稍候...</p>');
+        
+        $.ajax({
+            url: '/admin/doImportXml',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 1) {
+                    $('#importResult').html('<div class="alert alert-success"><i class="fas fa-check-circle mr-2"></i>' + res.msg + '</div>');
+                } else {
+                    $('#importResult').html('<div class="alert alert-danger"><i class="fas fa-times-circle mr-2"></i>' + res.msg + '</div>');
+                }
+            },
+            error: function() {
+                $('#importResult').html('<div class="alert alert-danger"><i class="fas fa-times-circle mr-2"></i>导入请求失败，请稍后重试</div>');
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
