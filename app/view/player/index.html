@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>{$videoTitle} | OBP v2.1.0</title>
+   <style>
+   /* --- 基本重置与布局 --- */
+   * {
+       margin: 0;
+       padding: 0;
+       box-sizing: border-box;
+   }
+
+   html, body {
+       width: 100%;
+       height: 100%;
+       overflow: hidden;
+       background-color: #000;
+       position: relative;
+   }
+
+   /* --- Artplayer 容器 --- */
+   .artplayer-app {
+       width: 100%;
+       height: calc(100% - 1px);
+       position: relative;
+   }
+
+   /* 现代化通知系统样式 */
+   .notifications-container {
+       position: fixed;
+       top: 20px;
+       right: 20px;
+       z-index: 1000;
+       display: flex;
+       flex-direction: column;
+       gap: 10px;
+       max-width: 90%;
+       width: 300px;
+   }
+
+   @media (max-width: 480px) {
+       .notifications-container {
+           top: 10px;
+           right: 10px;
+           width: calc(100% - 20px);
+       }
+   }
+
+   .notification {
+       display: flex;
+       align-items: center;
+       padding: 12px 15px;
+       border-radius: 8px;
+       color: white;
+       font-family: Arial, sans-serif;
+       font-size: 14px;
+       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+       transform: translateX(100%);
+       opacity: 0;
+       transition: transform 0.3s ease, opacity 0.3s ease;
+       position: relative;
+       overflow: hidden;
+       border: 1px solid rgba(255, 255, 255, 0.1);
+       backdrop-filter: blur(8px);
+   }
+
+   /* 不同类型的通知背景色 */
+   .notification.success { background: linear-gradient(to right, rgba(46, 204, 113, 0.9), rgba(39, 174, 96, 0.9)); }
+   .notification.error   { background: linear-gradient(to right, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9)); }
+   .notification.loading { background: linear-gradient(to right, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9)); }
+   .notification.info    { background: linear-gradient(to right, rgba(52, 73, 94, 0.9), rgba(44, 62, 80, 0.9)); }
+
+   .notification.show {
+       transform: translateX(0);
+       opacity: 1;
+   }
+
+   .notification-icon {
+       margin-right: 10px;
+       flex-shrink: 0;
+       width: 20px;
+       height: 20px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+   }
+
+   .notification-content {
+       flex-grow: 1;
+       word-break: break-word;
+   }
+
+   .notification-close {
+       margin-left: 10px;
+       cursor: pointer;
+       opacity: 0.7;
+       transition: opacity 0.2s;
+       flex-shrink: 0;
+       width: 16px;
+       height: 16px;
+   }
+   .notification-close:hover { opacity: 1; }
+
+   .notification-progress {
+       position: absolute;
+       bottom: 0;
+       left: 0;
+       height: 3px;
+       background-color: rgba(255, 255, 255, 0.3);
+       width: 100%;
+       transform-origin: left;
+   }
+
+   /* 加载中图标旋转动画 */
+   @keyframes spin {
+       0% { transform: rotate(0deg); }
+       100% { transform: rotate(360deg); }
+   }
+   .spin { animation: spin 1.5s linear infinite; }
+
+   /* --- 弹幕列表样式 --- */
+   .art-danmuku-list {
+       position: absolute;
+       top: 30px;
+       right: 20px;
+       width: 300px;
+       height: calc(100% - 90px);
+       background-color: rgba(0, 0, 0, 0.85);
+       backdrop-filter: blur(10px);
+       z-index: 100;
+       display: none;
+       flex-direction: column;
+       color: #fff;
+       border-radius: 8px;
+       box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+       border: 1px solid rgba(255, 255, 255, 0.1);
+       opacity: 0;
+       transform: translateX(20px);
+       transition: opacity 0.3s ease, transform 0.3s ease;
+       overflow: hidden;
+   }
+
+   .art-danmuku-list.show {
+       display: flex;
+       opacity: 1;
+       transform: translateX(0);
+   }
+
+   .art-danmuku-list-header {
+       padding: 6px 10px;
+       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       border-radius: 8px 8px 0 0;
+       flex-shrink: 0;
+   }
+
+   .art-danmuku-list-title {
+       display: flex;
+       align-items: center;
+       gap: 5px;
+       font-weight: bold;
+       font-size: 14px;
+   }
+   .art-danmuku-list-title span { flex-grow: 1; }
+
+   .art-danmuku-list-close {
+       margin-left: auto;
+       padding: 2px;
+       cursor: pointer;
+       opacity: 0.7;
+       transition: opacity 0.2s;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       flex-shrink: 0;
+   }
+   .art-danmuku-list-close:hover { opacity: 1; }
+
+   .art-danmuku-list-online {
+       display: flex;
+       align-items: center;
+       gap: 5px;
+       font-size: 12px;
+       color: rgba(255, 255, 255, 0.7);
+       flex-shrink: 0;
+   }
+
+   .art-danmuku-list-content {
+       flex: 1;
+       overflow-y: auto;
+       overflow-x: hidden;
+       padding: 0;
+       scrollbar-width: thin;
+       scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.3);
+   }
+   
+   .art-danmuku-list-content::-webkit-scrollbar {
+       width: 6px;
+   }
+   .art-danmuku-list-content::-webkit-scrollbar-track {
+       background: rgba(0, 0, 0, 0.3);
+       border-radius: 3px;
+   }
+   .art-danmuku-list-content::-webkit-scrollbar-thumb {
+       background-color: rgba(255, 255, 255, 0.3);
+       border-radius: 3px;
+   }
+   .art-danmuku-list-content::-webkit-scrollbar-thumb:hover {
+       background-color: rgba(255, 255, 255, 0.5);
+   }
+
+   .art-danmuku-list-content table {
+       width: 100%;
+       table-layout: fixed;
+       border-collapse: collapse;
+       font-size: 12px;
+   }
+
+   .art-danmuku-list-content th,
+   .art-danmuku-list-content td {
+       padding: 4px 8px;
+       text-align: left;
+       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+       line-height: 1.4;
+       white-space: nowrap;
+       overflow: hidden;
+       text-overflow: ellipsis;
+       vertical-align: middle;
+   }
+   .art-danmuku-list-content tr:last-child td {
+       border-bottom: none;
+   }
+
+   /* 列宽设置 */
+   .art-danmuku-list-content th:nth-child(1),
+   .art-danmuku-list-content td:nth-child(1) { width: 60px; text-align: center;}
+
+   .art-danmuku-list-content th:nth-child(2),
+   .art-danmuku-list-content td:nth-child(2) { width: auto; }
+
+   .art-danmuku-list-content th:nth-child(3),
+   .art-danmuku-list-content td:nth-child(3) { width: 85px; text-align: right; color: rgba(255, 255, 255, 0.6); }
+
+   .art-danmuku-list-content th {
+       font-weight: normal;
+       color: rgba(255, 255, 255, 0.5);
+       font-size: 11px;
+       padding-top: 6px;
+       padding-bottom: 6px;
+       position: sticky;
+       top: 0;
+       background-color: rgba(0, 0, 0, 0.85);
+       z-index: 1;
+   }
+
+   /* 响应式设计：小屏幕调整弹幕列表 */
+   @media (max-width: 768px) {
+       .art-danmuku-list {
+           width: calc(100% - 60px);
+           right: 10px;
+           top: 10px;
+           max-height: calc(100% - 60px);
+       }
+       .art-danmuku-list-content table { font-size: 11px; }
+       .art-danmuku-list-content th:nth-child(1),
+       .art-danmuku-list-content td:nth-child(1) { width: 50px; }
+       .art-danmuku-list-content th:nth-child(3),
+       .art-danmuku-list-content td:nth-child(3) { width: 75px; }
+   }
+
+   .art-danmuku-list-empty {
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       justify-content: center;
+       padding: 30px 20px;
+       color: rgba(255, 255, 255, 0.5);
+       font-size: 13px;
+       text-align: center;
+       flex-grow: 1;
+   }
+   .art-danmuku-list-empty svg {
+       width: 32px;
+       height: 32px;
+       margin-bottom: 15px;
+       opacity: 0.4;
+   }
+   .art-danmuku-list-empty small {
+       margin-top: 5px;
+       font-size: 11px;
+       color: rgba(255, 255, 255, 0.4);
+   }
+
+   /* 弹幕面板遮罩层 */
+   .art-danmuku-overlay {
+       position: absolute;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       z-index: 99;
+       display: none;
+   }
+</style>
+   <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/artplayer-plugin-danmuku/dist/artplayer-plugin-danmuku.js"></script>
+</head>
+<body>
+<div class="artplayer-app"></div>
+<div class="notifications-container" id="notifications-container"></div>
+<script>
+   // --- 控制台水印 & ASCII LOGO（OldBili Player Style）---
+   console.log(`%c
+   /$$$$$$  /$$       /$$ /$$$$$$$  /$$ /$$ /$$
+  /$$__  $$| $$      | $$| $$__  $$|__/| $$|__/
+ | $$  \\ $$| $$  /$$$$$$$| $$  \\ $$ /$$| $$ /$$
+ | $$  | $$| $$ /$$__  $$| $$$$$$$ | $$| $$| $$
+ | $$  | $$| $$| $$  | $$| $$__  $$| $$| $$| $$
+ | $$  | $$| $$| $$  | $$| $$  \\ $$| $$| $$| $$
+ |  $$$$$$/| $$|  $$$$$$$| $$$$$$$/| $$| $$| $$
+  /$$$$$$$ |/$$ \\_______/|_______/ |__/|__/|__/
+ | $$__  $$| $$
+ | $$  \\ $$| $$  /$$$$$$  /$$   /$$  /$$$$$$   /$$$$$$
+ | $$$$$$$/| $$ |____  $$| $$  | $$ /$$__  $$ /$$__  $$
+ | $$____/ | $$  /$$$$$$$| $$  | $$| $$$$$$$$| $$  \\__/
+ | $$      | $$ /$$__  $$| $$  | $$| $$_____/| $$
+ | $$      | $$|  $$$$$$$|  $$$$$$$|  $$$$$$$| $$
+ |__/      |__/ \\_______/ \\____  $$ \\_______/|__/
+                          /$$  | $$
+                         |  $$$$$$/
+                          \\______/
+
+          OldBili Player v2.1.0 (ThinkPHP Edition)
+ `, 'color: #42b983; font-weight: bold; font-size: 13px; font-family: monospace;');
+   console.log('%cPowered by: ThinkPHP 6 + AdminLTE 3  https://github.com/oldbili/oldbiliplayer', 'color: #888; font-size: 12px;');
+   console.log('%c⚠️ 请勿在控制台粘贴任何不明代码！以防泄露账号信息。', 'color: red; font-size: 14px; font-weight: bold;');
+
+   // --- 工具函数：获取 URL 参数 ---
+   function getUrlParameter(name) {
+       const search = decodeURIComponent(location.search);
+       const regex = new RegExp('[\\?&]' + name.replace(/[\[\]]/g, '\\$&') + '=([^&#]*)');
+       const results = regex.exec(search);
+       return results === null ? '' : (results[1] || '');
+   }
+
+   // --- 现代化通知系统对象 ---
+   const notification = {
+       container: document.getElementById('notifications-container'),
+       activeNotifications: {},
+       icons: {
+           success: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+           error: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+           loading: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`,
+           info: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+           close: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+       },
+       show(message, type = 'success', duration = 3000) {
+           console.log(`[通知] 类型: ${type}, 信息: ${message}`);
+           const id = Date.now() + Math.random();
+           const notificationEl = document.createElement('div');
+           notificationEl.className = `notification ${type}`;
+           notificationEl.innerHTML = `
+               <div class="notification-icon">${this.icons[type] || this.icons.info}</div>
+               <div class="notification-content">${message}</div>
+               <div class="notification-close">${this.icons.close}</div>
+               ${duration > 0 && type !== 'loading' ? '<div class="notification-progress"></div>' : ''}
+           `;
+           this.container.appendChild(notificationEl);
+           this.activeNotifications[id] = { element: notificationEl, timeout: null, progressInterval: null };
+           setTimeout(() => { notificationEl.classList.add('show'); }, 10);
+
+           if (duration > 0 && type !== 'loading') {
+               const progressEl = notificationEl.querySelector('.notification-progress');
+               if (progressEl) {
+                   let progress = 100;
+                   const interval = 100; // Update every 100ms
+                   const step = 100 / (duration / interval);
+
+                   this.activeNotifications[id].progressInterval = setInterval(() => {
+                       progress -= step;
+                       if (progress <= 0) {
+                           clearInterval(this.activeNotifications[id].progressInterval);
+                           progress = 0;
+                       }
+                       progressEl.style.transform = `scaleX(${progress / 100})`;
+                   }, interval);
+               }
+               this.activeNotifications[id].timeout = setTimeout(() => { this.hide(id); }, duration);
+           }
+
+           const closeBtn = notificationEl.querySelector('.notification-close');
+           closeBtn.addEventListener('click', () => { this.hide(id); });
+           return id;
+       },
+       hide(id) {
+           const notificationData = this.activeNotifications[id];
+           if (!notificationData) return;
+           if (notificationData.timeout) { clearTimeout(notificationData.timeout); }
+           if (notificationData.progressInterval) { clearInterval(notificationData.progressInterval); }
+
+           notificationData.element.classList.remove('show');
+           setTimeout(() => {
+               if (notificationData.element.parentNode) {
+                   notificationData.element.parentNode.removeChild(notificationData.element);
+               }
+               delete this.activeNotifications[id];
+           }, 300); // Wait for transition
+       },
+       hideAll() {
+           Object.keys(this.activeNotifications).forEach(id => { this.hide(id); });
+       }
+   };
+
+   // --- 初始加载和参数处理 ---
+   const loadingId = notification.show('正在加载资源...', 'loading', 0); // Show indefinitely until hidden
+   const videoUrl = '{$videoUrl|raw}'; // 视频 URL
+   const hasDmkParam = {$hasDanmuTable ? 'true' : 'false'}; // 是否有弹幕
+   const videoId = '{$videoId|raw}'; // 视频ID，用于在线人数统计
+   const subtitleUrl = '{$subtitleUrl|raw}'; // 字幕 URL
+   const obvId = {$obvId ?: 0}; // 视频映射ID
+
+   // 预加载的弹幕数据
+   const preloadedDanmakuData = {$danmakuDataJson|raw};
+
+   // --- 在线用户统计系统 ---
+   const onlineUserSystem = {
+       userId: null,
+       onlineCount: 0,
+       heartbeatInterval: null,
+       heartbeatDelay: 30000, // 30秒发送一次心跳
+       videoId: videoId,
+
+       init() {
+           this.userId = this.getCookie('online_user_id');
+           this.sendHeartbeat(); // Send initial heartbeat
+           this.heartbeatInterval = setInterval(() => this.sendHeartbeat(), this.heartbeatDelay);
+           window.addEventListener('beforeunload', () => clearInterval(this.heartbeatInterval));
+           // Initial fetch of count without waiting for heartbeat
+           this.getOnlineCount();
+       },
+       sendHeartbeat() {
+           const formData = new FormData();
+           if (this.userId) formData.append('user_id', this.userId);
+           if (this.videoId) formData.append('video_id', this.videoId);
+
+           fetch('/heartbeat', { 
+               method: 'POST', 
+               body: formData,
+               headers: {
+                   'Accept': 'application/json'
+               }
+           })
+           .then(response => response.json())
+           .then(data => {
+               if (data.success) {
+                   if (!this.userId && data.user_id) this.userId = data.user_id; // Update user ID if new
+                   this.updateOnlineCount(data.count);
+               } else {
+                   console.warn('心跳响应失败:', data.message);
+               }
+           })
+           .catch(error => console.error('在线用户心跳发送失败:', error));
+       },
+       getOnlineCount() {
+           let url = '/onlineCount';
+           if (this.videoId) url += '?video_id=' + encodeURIComponent(this.videoId);
+
+           fetch(url, {
+               headers: {
+                   'Accept': 'application/json'
+               }
+           })
+           .then(response => response.json())
+           .then(data => {
+               if (data.success) {
+                   this.updateOnlineCount(data.count);
+               } else {
+                   console.warn('获取在线人数失败:', data.message);
+               }
+           })
+           .catch(error => console.error('获取在线人数失败:', error));
+       },
+       updateOnlineCount(count) {
+           this.onlineCount = count;
+           const onlineElements = document.querySelectorAll('.online-user-count');
+           onlineElements.forEach(element => element.textContent = count);
+
+           // Update Danmuku List Online Count Display (if exists)
+           const danmukuListOnline = document.querySelector('.art-danmuku-list-online');
+           if (danmukuListOnline) {
+               const danmukuCountEl = document.querySelector('.danmuku-count');
+               const currentDanmukuCount = danmukuCountEl ? danmukuCountEl.textContent : '0';
+               danmukuListOnline.innerHTML = `
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                       <circle cx="9" cy="7" r="4"></circle>
+                       <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                   </svg>
+                   <span><span class="online-user-count">${count}</span> 人在线，<span class="danmuku-count">${currentDanmukuCount}</span>条弹幕</span>
+               `;
+           }
+       },
+       getCookie(name) {
+           const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+           return match ? match[2] : null;
+       }
+   };
+
+   // --- 响应式弹幕字体大小逻辑 ---
+   let artInstance = null; // 用于存储 Artplayer 实例
+   const mobileMediaQuery = window.matchMedia("(max-width: 767px)");
+
+   function getDanmakuFontSize(isMobile) {
+       return isMobile ? 15 : 25;
+   }
+
+   function updateDanmakuFontSize() {
+       if (artInstance && artInstance.plugins && artInstance.plugins.artplayerPluginDanmuku) {
+           const isMobile = mobileMediaQuery.matches;
+           const newSize = getDanmakuFontSize(isMobile);
+           const danmukuPlugin = artInstance.plugins.artplayerPluginDanmuku;
+           // Check if config method exists and option can be accessed
+           if (typeof danmukuPlugin.config === 'function' && danmukuPlugin.option) {
+               const currentSize = danmukuPlugin.option.fontSize;
+               if (newSize !== currentSize) {
+                   console.log(`窗口大小变化，更新弹幕字号为: ${newSize}`);
+                   try {
+                       danmukuPlugin.config('fontSize', newSize);
+                       // Ensure resize is called if available
+                       if (typeof danmukuPlugin.resize === 'function') {
+                           danmukuPlugin.resize();
+                       }
+                   } catch(e) {
+                       console.error("更新弹幕字体大小失败:", e);
+                   }
+               }
+           } else {
+               console.warn("无法访问弹幕插件配置或 config 方法。");
+           }
+       }
+   }
+
+   function debounce(func, wait) {
+       let timeout;
+       return function executedFunction(...args) {
+           const later = () => {
+               clearTimeout(timeout);
+               func(...args);
+           };
+           clearTimeout(timeout);
+           timeout = setTimeout(later, wait);
+       };
+   }
+
+   const debouncedUpdateFontSize = debounce(updateDanmakuFontSize, 250);
+
+   if (mobileMediaQuery.addEventListener) {
+       mobileMediaQuery.addEventListener('change', debouncedUpdateFontSize);
+   } else if (mobileMediaQuery.addListener) { // Fallback for older browsers
+       mobileMediaQuery.addListener(debouncedUpdateFontSize);
+   }
+
+   // --- 全局变量和弹幕加载 ---
+   let globalDanmukuData = [];
+   let isDanmukuPanelOpen = false;
+
+   // --- 弹幕列表功能 ---
+   function addDanmukuListFeature(art) {
+       if (!art) {
+           console.error("ArtPlayer未加载，无法添加弹幕列表功能");
+           return null;
+       }
+
+       const controlsRight = art.template.$controlsRight;
+       if (!controlsRight) {
+           console.error("无法找到 ArtPlayer 控制栏右侧容器");
+           return null;
+       }
+
+       const danmukuListButton = document.createElement("div");
+       danmukuListButton.className = "art-control art-control-danmuku-list";
+       danmukuListButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="art-icon"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`;
+       danmukuListButton.title = "弹幕列表";
+
+       const danmukuOverlay = document.createElement("div");
+       danmukuOverlay.className = "art-danmuku-overlay";
+
+       const danmukuListPanel = document.createElement("div");
+       danmukuListPanel.className = "art-danmuku-list";
+       danmukuListPanel.style.display = "none";
+
+       const danmukuListHeader = document.createElement("div");
+       danmukuListHeader.className = "art-danmuku-list-header";
+
+       const danmukuListTitle = document.createElement("div");
+       danmukuListTitle.className = "art-danmuku-list-title";
+       danmukuListTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span>弹幕列表</span>`;
+
+       const danmukuListClose = document.createElement("div");
+       danmukuListClose.className = "art-danmuku-list-close";
+       danmukuListClose.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+       danmukuListClose.addEventListener("click", (e) => {
+           e.stopPropagation();
+           toggleDanmukuPanel(false);
+       });
+       danmukuListTitle.appendChild(danmukuListClose); // Append close button inside title container
+
+       const danmukuListOnline = document.createElement("div");
+       danmukuListOnline.className = "art-danmuku-list-online";
+       // Initial state will be updated by onlineUserSystem and updateDanmukuList
+       danmukuListOnline.innerHTML = `<span><span class="online-user-count">?</span> 人在线，<span class="danmuku-count">?</span>条弹幕</span>`;
+
+       danmukuListHeader.appendChild(danmukuListTitle);
+       danmukuListHeader.appendChild(danmukuListOnline);
+
+       const danmukuListContent = document.createElement("div");
+       danmukuListContent.className = "art-danmuku-list-content";
+
+       const danmukuTable = document.createElement("table");
+       const danmukuTableHead = document.createElement("thead");
+       danmukuTableHead.innerHTML = "<tr><th>时间</th><th>弹幕内容</th><th>发送时间</th></tr>";
+       const danmukuTableBody = document.createElement("tbody");
+       danmukuTable.appendChild(danmukuTableHead);
+       danmukuTable.appendChild(danmukuTableBody);
+       danmukuListContent.appendChild(danmukuTable);
+
+       danmukuListPanel.appendChild(danmukuListHeader);
+       danmukuListPanel.appendChild(danmukuListContent);
+
+       // Insert button before the fullscreen button if possible
+       const fullscreenButton = controlsRight.querySelector(".art-control-fullscreen");
+       if (fullscreenButton) {
+           controlsRight.insertBefore(danmukuListButton, fullscreenButton);
+       } else {
+           controlsRight.appendChild(danmukuListButton); // Fallback append
+       }
+
+       art.template.$player.appendChild(danmukuOverlay);
+       art.template.$player.appendChild(danmukuListPanel);
+
+       function formatTime(seconds) {
+           const h = Math.floor(seconds / 3600);
+           const m = Math.floor((seconds % 3600) / 60);
+           const s = Math.floor(seconds % 60);
+           return [
+               h > 0 ? h.toString().padStart(2, "0") : "",
+               m.toString().padStart(2, "0"),
+               s.toString().padStart(2, "0")
+           ].filter(Boolean).join(":");
+       }
+
+       function formatDate(timestamp) {
+           if (!timestamp || typeof timestamp !== 'number') return '未知';
+           try {
+               const date = new Date(timestamp);
+               if (isNaN(date.getTime())) return '无效日期'; // Check if date is valid
+               const month = (date.getMonth() + 1).toString().padStart(2, "0");
+               const day = date.getDate().toString().padStart(2, "0");
+               const hours = date.getHours().toString().padStart(2, "0");
+               const minutes = date.getMinutes().toString().padStart(2, "0");
+               return `${month}-${day} ${hours}:${minutes}`;
+           } catch (e) {
+               console.error("格式化日期错误:", e, "时间戳:", timestamp);
+               return '错误日期';
+           }
+       }
+
+       function toggleDanmukuPanel(show) {
+           if (show === undefined) {
+               show = danmukuListPanel.style.display === "none";
+           }
+           isDanmukuPanelOpen = show;
+           if (show) {
+               danmukuOverlay.style.display = "block";
+               danmukuListPanel.style.display = "flex";
+               setTimeout(() => danmukuListPanel.classList.add("show"), 10); // Animate in
+               updateDanmukuList(); // Update content when opened
+               onlineUserSystem.getOnlineCount(); // Refresh online count when opened
+           } else {
+               danmukuOverlay.style.display = "none";
+               danmukuListPanel.classList.remove("show");
+               setTimeout(() => danmukuListPanel.style.display = "none", 300); // Hide after animation
+           }
+       }
+
+       function updateDanmukuList() {
+           // Remove existing empty message if present
+           const existingEmpty = danmukuListContent.querySelector(".art-danmuku-list-empty");
+           if (existingEmpty) existingEmpty.remove();
+           danmukuTable.style.display = "table"; // Ensure table is visible by default
+
+           // Use the globally loaded and sorted data
+           const danmukuQueue = globalDanmukuData || [];
+           danmukuTableBody.innerHTML = ""; // Clear previous entries
+
+           const onlineUsers = onlineUserSystem.onlineCount || 0;
+           const danmukuCount = danmukuQueue.length;
+
+           // Update header info
+           danmukuListOnline.innerHTML = `
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                   <circle cx="9" cy="7" r="4"></circle>
+                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+               </svg>
+               <span><span class="online-user-count">${onlineUsers}</span> 人在线，<span class="danmuku-count">${danmukuCount}</span>条弹幕</span>
+           `;
+
+           if (!hasDmkParam) {
+               danmukuTable.style.display = "none"; // Hide table
+               const emptyContainer = document.createElement("div");
+               emptyContainer.className = "art-danmuku-list-empty";
+               emptyContainer.innerHTML = `
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                   <div>未装载弹幕池</div>
+                   <small>(视频ID: ${obvId} 没有弹幕数据)</small>
+               `;
+               danmukuListContent.appendChild(emptyContainer);
+           } else if (danmukuCount === 0) {
+               danmukuTable.style.display = "none"; // Hide table
+               const emptyContainer = document.createElement("div");
+               emptyContainer.className = "art-danmuku-list-empty";
+               emptyContainer.innerHTML = `
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                   <div>当前弹幕池暂无弹幕</div>
+               `;
+               danmukuListContent.appendChild(emptyContainer);
+           } else {
+               // Populate table if data exists
+               danmukuQueue.forEach((danmu) => {
+                   const row = document.createElement("tr");
+                   const timeCell = document.createElement("td");
+                   const contentCell = document.createElement("td");
+                   const dateCell = document.createElement("td");
+
+                   timeCell.textContent = formatTime(danmu.time);
+                   timeCell.title = `视频时间: ${formatTime(danmu.time)}`;
+
+                   contentCell.textContent = danmu.text;
+                   contentCell.title = danmu.text; // Tooltip for full content
+                   if (danmu.color) contentCell.style.color = danmu.color; // Apply color if available
+
+                   // Use timestamp for date, fallback to '未知' if missing/invalid
+                   dateCell.textContent = formatDate(danmu.timestamp);
+                   dateCell.title = `发送于: ${formatDate(danmu.timestamp)}`;
+
+                   row.appendChild(timeCell);
+                   row.appendChild(contentCell);
+                   row.appendChild(dateCell);
+                   danmukuTableBody.appendChild(row);
+               });
+           }
+       }
+
+       // --- Event Listeners for Panel ---
+       danmukuListButton.addEventListener("click", (e) => {
+           e.stopPropagation();
+           toggleDanmukuPanel();
+       });
+       danmukuOverlay.addEventListener("click", (e) => {
+           e.stopPropagation();
+           toggleDanmukuPanel(false);
+       });
+
+       // Return control object
+       return {
+           button: danmukuListButton,
+           panel: danmukuListPanel,
+           overlay: danmukuOverlay,
+           update: updateDanmukuList,
+           toggle: toggleDanmukuPanel
+       };
+   }
+
+   // --- DOM 加载完成后的初始化 ---
+   document.addEventListener('DOMContentLoaded', function () {
+       // 初始化在线用户系统
+       onlineUserSystem.init();
+
+       // Notification based on dmk parameter state
+       if (!hasDmkParam) {
+           notification.show('该视频没有弹幕数据', 'info', 3000);
+       }
+
+       try {
+           const initialFontSize = getDanmakuFontSize(mobileMediaQuery.matches);
+           console.log(`设备检测: ${mobileMediaQuery.matches ? '移动端' : '桌面端'}, 初始弹幕字号: ${initialFontSize}`);
+
+           // --- 创建 Artplayer 配置对象 ---
+           const artplayerOptions = {
+               container: '.artplayer-app',
+               url: videoUrl,
+               autoSize: false,
+               fullscreen: true,
+               playbackRate: true,
+               miniProgressBar: true,
+               autoPlayback: true,
+               fastForward: true,
+               clickToPlay: true,
+               contextmenu: [
+                   {
+                       html: '发送反馈',
+                       click: () => {
+                           try { window.parent.MAC.Gbook.Report(``); }
+                           catch (e) { notification.show('请使用播放器右侧菜单[<]进行反馈！', 'info', 3000); console.error('视频反馈提示', e); }
+                       },
+                   },
+                   {
+                       html: 'OBP v2.1.0', // Updated version
+                       click: () => {
+                           try { window.parent.MAC.Gbook.Report(``); }
+                           catch (e) { notification.show('OBP 2.1.0 | ThinkPHP Edition', 'success', 3000); console.error('OBP INFO', e); }
+                       },
+                   },
+               ],
+               plugins: [
+                   artplayerPluginDanmuku({
+                       danmuku: () => {
+                           // 使用预加载的弹幕数据
+                           console.log("使用数据库弹幕数据:", preloadedDanmakuData.length);
+                           globalDanmukuData = preloadedDanmakuData;
+                           return Promise.resolve(preloadedDanmakuData);
+                       },
+                       speed: 5,
+                       margin: [10, 10],
+                       opacity: 1,
+                       color: '#FFFFFF',
+                       mode: 0,
+                       heatmap: hasDmkParam, // Show heatmap if we have danmaku
+                       points: [],
+                       modes: [0, 1, 2],
+                       fontSize: initialFontSize,
+                       antiOverlap: false,
+                       emitter: hasDmkParam, // Enable emitter if we have danmaku
+                       maxLength: 20,
+                       lockTime: 5,
+                       theme: 'dark',
+                       beforeEmit: (danmu) => {
+                           if (!hasDmkParam) {
+                               notification.show('无法发送弹幕：该视频没有弹幕数据', 'error', 3000);
+                               return false; // Artplayer expects boolean or Promise<boolean>
+                           }
+
+                           return new Promise(resolve => {
+                               const content = danmu.text.trim();
+                               if (!content) {
+                                   notification.show('弹幕不能为空！', 'error', 2000);
+                                   return resolve(false);
+                               }
+
+                               const currentTime = artInstance ? artInstance.currentTime : 0;
+                               const postData = {
+                                   text: content,
+                                   time: currentTime,
+                                   color: danmu.color,
+                                   mode: danmu.mode,
+                                   timestamp: Date.now(), // Add current timestamp
+                                   obvId: obvId // Add video ID for database storage
+                               };
+
+                               fetch('/sendDanmaku', {
+                                   method: 'POST',
+                                   headers: {
+                                       'Content-Type': 'application/json',
+                                       'Accept': 'application/json'
+                                   },
+                                   body: JSON.stringify(postData)
+                               })
+                               .then(res => {
+                                   if (!res.ok) { throw new Error(`弹幕服务器响应错误: ${res.status}`); }
+                                   // Assuming success if status is 2xx
+                                   return res.json();
+                               })
+                               .then(responseData => {
+                                   console.log("弹幕发送响应:", responseData);
+                                   notification.show('弹幕发送成功', 'success', 2000);
+
+                                   // Create the danmu object matching globalDanmukuData structure
+                                   const newDanmuData = {
+                                       text: content,
+                                       time: currentTime,
+                                       color: danmu.color,
+                                       mode: danmu.mode, // Keep original mode
+                                       timestamp: postData.timestamp // Use the timestamp sent
+                                   };
+
+                                   // Add to global data immediately for list update
+                                   globalDanmukuData.push(newDanmuData);
+                                   // Re-sort global data if timestamp is crucial for order
+                                   globalDanmukuData.sort((a, b) => (a.timestamp || a.time) - (b.timestamp || b.time));
+
+                                   // Update list if open
+                                   if (isDanmukuPanelOpen && danmukuListControl) {
+                                       danmukuListControl.update();
+                                   }
+
+                                   resolve(true); // Allow Artplayer to also display the danmu
+                               })
+                               .catch(err => {
+                                   notification.show('弹幕发送失败', 'error', 3000);
+                                   console.error('弹幕发送失败:', err);
+                                   resolve(false); // Prevent Artplayer from displaying
+                               });
+                           });
+                       }
+                   }),
+               ],
+           };
+
+           // --- 条件化添加字幕配置 ---
+           if (subtitleUrl) {
+               console.log(`检测到字幕文件，尝试加载: ${subtitleUrl}`);
+               let subtitleType = 'srt';
+               const urlExtension = subtitleUrl.split('.').pop().toLowerCase();
+               if (urlExtension === 'vtt') subtitleType = 'vtt';
+
+               artplayerOptions.subtitle = {
+                   url: subtitleUrl,
+                   type: subtitleType,
+                   encoding: 'utf-8',
+                   style: {
+                       color: '#FFFFFF',
+                       fontSize: '20px',
+                       'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.8), -1px -1px 1px rgba(0, 0, 0, 0.8), 1px -1px 1px rgba(0, 0, 0, 0.8), -1px 1px 1px rgba(0, 0, 0, 0.8)'
+                   },
+               };
+               notification.show('检测到字幕参数，尝试加载中...', 'info', 3000);
+           } else {
+               console.log("未检测到字幕文件参数");
+           }
+
+           // --- 初始化 Artplayer ---
+           console.log("Artplayer 初始化选项:", artplayerOptions);
+           artInstance = new Artplayer(artplayerOptions); // Assign to global instance
+
+           // --- 添加弹幕列表功能 ---
+           // Store the control object returned by the function
+           const danmukuListControl = addDanmukuListFeature(artInstance);
+
+           // --- Artplayer 事件监听 ---
+           artInstance.on('ready', () => {
+               notification.hide(loadingId);
+               notification.show('播放器准备就绪', 'success', 2000);
+               updateDanmakuFontSize(); // Initial font size check
+               // Initial update for danmuku list header info after player is ready
+               if (danmukuListControl) danmukuListControl.update();
+           });
+
+           artInstance.on('error', (error, reconnectTime) => {
+               notification.hide(loadingId);
+               let errorMsg = `播放器错误: ${error.message || '未知错误'}`;
+               if (reconnectTime !== undefined && reconnectTime >= 0) {
+                   errorMsg += `，将在 ${reconnectTime} 秒后尝试重连...`;
+                   notification.show(errorMsg, 'error', reconnectTime * 1000 + 1000);
+               } else {
+                   notification.show(errorMsg, 'error', 5000);
+               }
+               console.error('Artplayer 错误:', error, '重连时间:', reconnectTime);
+           });
+
+           // Subtitle events
+           artInstance.on('subtitleLoad', (url) => {
+               console.log('字幕加载成功:', url);
+               notification.show('字幕加载成功', 'success', 2000);
+           });
+           artInstance.on('subtitleError', (error) => {
+               console.error('字幕加载失败:', error);
+               notification.show(`字幕加载失败: ${error.message || '无法加载字幕文件'}`, 'error', 4000);
+           });
+
+           // Danmuku plugin events
+           artInstance.on('artplayerPluginDanmuku:loaded', (danmus) => {
+               // This event fires *after* the loadDanmukuData completes via the 'danmuku' option function
+               const count = Array.isArray(danmus) ? danmus.length : 0;
+               if (hasDmkParam) {
+                   notification.show(`已从数据库加载 ${count} 条弹幕`, 'info', 3000);
+               }
+               // Update the list panel now that data is confirmed loaded into plugin
+               if (danmukuListControl) danmukuListControl.update();
+               globalDanmukuData = Array.isArray(danmus) ? danmus : []; // Sync global data with plugin's data
+           });
+
+           artInstance.on('artplayerPluginDanmuku:error', (error) => {
+               console.error("弹幕插件错误:", error);
+               notification.show(`弹幕加载或处理失败: ${error.message || '未知弹幕错误'}`, 'error', 5000);
+               // Update list to show error or empty state
+               if (danmukuListControl) danmukuListControl.update();
+           });
+
+       } catch (error) {
+           notification.hide(loadingId);
+           notification.show('播放器初始化过程中发生严重错误', 'error', 0);
+           console.error('播放器初始化失败 (Catch Block):', error);
+       }
+   });
+
+   // --- Cleanup on Page Unload ---
+   window.addEventListener('unload', () => {
+       // Remove resize listener
+       if (mobileMediaQuery.removeEventListener) {
+           mobileMediaQuery.removeEventListener('change', debouncedUpdateFontSize);
+       } else if (mobileMediaQuery.removeListener) {
+           mobileMediaQuery.removeListener(debouncedUpdateFontSize);
+       }
+       // Optional: Clear heartbeat interval if not handled by beforeunload
+       if (onlineUserSystem && onlineUserSystem.heartbeatInterval) {
+           clearInterval(onlineUserSystem.heartbeatInterval);
+       }
+       // Optional: Destroy Artplayer instance if needed
+       if (artInstance && typeof artInstance.destroy === 'function') {
+           try { artInstance.destroy(false); } // Pass false to keep the container element
+           catch(e) { console.warn("销毁 Artplayer 实例时出错:", e); }
+       }
+   });
+</script>
+</body>
+</html>
