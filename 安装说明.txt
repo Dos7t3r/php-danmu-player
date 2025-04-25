@@ -1,0 +1,88 @@
+OldBili Player v2.1.2 BETA 安装说明
+============================
+
+1. 解压文件
+  将压缩包解压到您的网站目录，确保保留目录结构。
+
+2. 配置数据库
+  复制 .env.example 为 .env 并编辑数据库配置：
+  
+  [DATABASE]
+  TYPE = mysql
+  HOSTNAME = 127.0.0.1
+  DATABASE = obp_database  # 您的数据库名
+  USERNAME = obp_user      # 您的数据库用户名
+  PASSWORD = your_password # 您的数据库密码
+  HOSTPORT = 3306
+  CHARSET = utf8mb4
+  DEBUG = true
+
+2.5 使用宝塔composer安装环境
+
+3. 设置目录权限
+  确保以下目录可写：
+  - runtime/
+  - public/uploads/
+  - public/danmaku/
+
+4. 安装数据库
+  方法1: 命令行安装（推荐）
+  进入v2.0.0目录，运行：
+  php think install
+
+  方法2: 浏览器安装
+  访问 http://您的网站/v2.0.0/install.php
+
+5. 配置Web服务器
+  将网站根目录指向 v2.0.0/public 目录
+  
+  Apache配置示例:
+  <VirtualHost *:80>
+      DocumentRoot "/path/to/v2.0.0/public"
+      <Directory "/path/to/v2.0.0/public">
+          Options Indexes FollowSymLinks
+          AllowOverride All
+          Require all granted
+      </Directory>
+  </VirtualHost>
+  
+  Nginx配置示例:
+  server {
+      listen 80;
+      server_name your-domain.com;
+      root /path/to/v2.0.0/public;
+      
+      location / {
+          index index.php index.html;
+          try_files $uri $uri/ /index.php?$query_string;
+      }
+      
+      location ~ \.php$ {
+          fastcgi_pass 127.0.0.1:9000;
+          fastcgi_index index.php;
+          fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+          include fastcgi_params;
+      }
+  }
+
+6. 访问系统
+  前台: http://您的网站/
+  后台: http://您的网站/admin
+  
+  默认管理员账号: admin
+  默认管理员密码: admin123
+  
+  请在首次登录后立即修改默认密码！
+
+6.5 （beta版BUG）如果无法登陆 请访问fuck.php 强行更改密码，完成更改后一定要删除！！！！
+
+7. 从旧版迁移数据
+  如果您需要从旧版迁移数据，请访问:
+  http://您的网站/migration.php
+  按照页面提示操作。
+	（这个Migration默认是.disabled 你需要删除此后缀）
+
+注意事项:
+- 确保PHP版本 >= 7.2.5
+- 需要开启PDO和PDO_MySQL扩展
+- 如遇到问题，请查看 runtime/log 目录下的日志文件
