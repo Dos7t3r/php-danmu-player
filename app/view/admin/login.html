@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OldBili Player | 登录</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <style>
+        .login-page {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-card-body {
+            border-radius: 10px;
+        }
+        .login-logo {
+            margin-bottom: 0;
+            padding: 20px;
+        }
+        .login-logo a {
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .btn-primary:hover {
+            background-color: #764ba2;
+            border-color: #764ba2;
+        }
+        .btn-primary:disabled {
+            background-color: #a5aee9;
+            border-color: #a5aee9;
+        }
+        .cf-turnstile {
+            margin-bottom: 15px;
+        }
+        .env-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            display: none;
+        }
+        .verification-message {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <div class="login-logo">
+        <a href="#"><b>OldBili</b> Player</a>
+    </div>
+    <div class="card">
+        <div class="card-body login-card-body">
+            <p class="login-box-msg">登录管理后台</p>
+            
+            <!-- 环境变量警告 -->
+            <div id="env-warning" class="env-warning">
+                <i class="fas fa-exclamation-triangle"></i> 
+                检测到使用测试密钥，请检查配置。
+            </div>
+            
+            <form id="loginForm">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" name="username" placeholder="用户名" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-user"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="password" class="form-control" name="password" placeholder="密码" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-lock"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cloudflare Turnstile 人机验证 -->
+                <div class="mb-3">
+                    <div id="cf-turnstile-container" class="d-flex justify-content-center"></div>
+                    <div id="turnstile-error" class="text-danger text-center mt-2" style="display:none;">人机验证加载失败，请刷新页面重试</div>
+                    <div id="verification-required" class="verification-message">
+                        <i class="fas fa-info-circle"></i> 请完成人机验证以启用登录按钮
+                    </div>
+                    <div id="verification-complete" class="verification-message text-success" style="display:none;">
+                        <i class="fas fa-check-circle"></i> 验证成功，可以登录
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-8">
+                        <div class="icheck-primary">
+                            <input type="checkbox" id="remember">
+                            <label for="remember">
+                                记住我
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <!-- 默认禁用登录按钮 -->
+                        <button type="submit" id="login-button" class="btn btn-primary btn-block" disabled>登录</button>
+                    </div>
+                </div>
+            </form>
+            <div class="mt-3 text-center">
+                <p class="mb-1">
+                    <a href="javascript:void(0)">忘记密码?</a>
+                </p>
+                <p class="mb-0">
+                    <a href="/" class="text-center">返回首页</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-3 text-white">
+        <small>OldBili Player &copy; 2023-2024</small>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+<script>
+$(function() {
+    // 定义 Turnstile 是否启用
+    // 如果后端没有提供 $cf_enabled 变量，默认为 true
+    const isEnabled = <?php echo isset($cf_enabled) ? ($cf_enabled ? 'true' : 'false') : 'true'; ?>;
+    
+    // 获取登录按钮元素
+    const loginButton = document.getElementById('login-button');
+    
+    // 如果 Turnstile 未启用，则直接启用登录按钮
+    if (!isEnabled) {
+        loginButton.disabled = false;
+        document.getElementById('verification-required').style.display = 'none';
+    }
+    
+    // 检查是否使用测试密钥
+    const siteKey = '<?php echo isset($cf_site_key) ? $cf_site_key : "1x00000000000000000000AA"; ?>';
+    
+    console.log("Turnstile configuration - Enabled:", isEnabled, "Site Key:", siteKey.substring(0, 10) + "...");
+    
+    if (siteKey === '1x00000000000000000000AA') {
+        console.warn("Using Cloudflare Turnstile test site key. Check your configuration.");
+        document.getElementById('env-warning').style.display = 'block';
+    }
+    
+    // 手动渲染 Turnstile
+    window.onloadTurnstileCallback = function() {
+        try {
+            // 只有在启用的情况下才渲染
+            if (isEnabled) {
+                turnstile.render('#cf-turnstile-container', {
+                    sitekey: siteKey,
+                    theme: 'light',
+                    callback: function(token) {
+                        // 将令牌添加到表单中
+                        if (!$('input[name="cf-turnstile-response"]').length) {
+                            $('#loginForm').append('<input type="hidden" name="cf-turnstile-response" value="' + token + '">');
+                        } else {
+                            $('input[name="cf-turnstile-response"]').val(token);
+                        }
+                        console.log("Turnstile token received:", token.substring(0, 10) + "...");
+                        
+                        // 启用登录按钮
+                        loginButton.disabled = false;
+                        
+                        // 更新验证消息
+                        document.getElementById('verification-required').style.display = 'none';
+                        document.getElementById('verification-complete').style.display = 'block';
+                    },
+                    "expired-callback": function() {
+                        // 验证过期，禁用登录按钮
+                        loginButton.disabled = true;
+                        $('input[name="cf-turnstile-response"]').remove();
+                        
+                        // 更新验证消息
+                        document.getElementById('verification-required').style.display = 'block';
+                        document.getElementById('verification-complete').style.display = 'none';
+                        
+                        console.log("Turnstile token expired");
+                    },
+                    "error-callback": function() {
+                        // 验证错误，禁用登录按钮
+                        loginButton.disabled = true;
+                        $('#turnstile-error').show();
+                        
+                        console.log("Turnstile error occurred");
+                    }
+                });
+                console.log("Turnstile rendered successfully");
+            } else {
+                console.log("Turnstile is disabled, skipping render");
+                // 隐藏容器和验证消息
+                document.getElementById('cf-turnstile-container').style.display = 'none';
+                document.getElementById('verification-required').style.display = 'none';
+            }
+        } catch (e) {
+            console.error("Error rendering Turnstile:", e);
+            $('#turnstile-error').show();
+            
+            // 如果 Turnstile 加载失败但配置为必需，保持按钮禁用
+            if (isEnabled) {
+                loginButton.disabled = true;
+            } else {
+                // 如果 Turnstile 不是必需的，则启用按钮
+                loginButton.disabled = false;
+            }
+        }
+    };
+
+    // 检查 Turnstile 是否已加载
+    if (typeof turnstile !== 'undefined') {
+        window.onloadTurnstileCallback();
+    } else {
+        // 等待 Turnstile 脚本加载
+        window.addEventListener('load', function() {
+            // 如果 3 秒后仍未加载，显示错误
+            setTimeout(function() {
+                if (typeof turnstile === 'undefined') {
+                    if (isEnabled) {
+                        console.error('Cloudflare Turnstile 未能加载');
+                        $('#turnstile-error').show();
+                    } else {
+                        console.log("Turnstile is disabled, no need to load");
+                        // 如果 Turnstile 不是必需的，则启用按钮
+                        loginButton.disabled = false;
+                    }
+                } else {
+                    window.onloadTurnstileCallback();
+                }
+            }, 3000);
+        });
+    }
+
+    $('#loginForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // 再次检查：如果需要验证但没有验证令牌，阻止提交
+        // 这是一个额外的安全措施，因为按钮应该已经被禁用
+        if (isEnabled && !$('input[name="cf-turnstile-response"]').val()) {
+            alert('请完成人机验证');
+            return false;
+        }
+        
+        // 显示加载状态
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> 登录中...').prop('disabled', true);
+        
+        // 获取表单数据
+        const formData = $(this).serialize();
+        console.log("Form data:", formData);
+        
+        $.ajax({
+            url: '<?php echo url("admin/doLogin"); ?>',
+            type: 'post',
+            data: formData,
+            dataType: 'json',
+            success: function(res) {
+                console.log("Login response:", res);
+                
+                if (res.code === 1) {
+                    // 登录成功，直接使用window.location跳转
+                    window.location.href = res.url;
+                } else {
+                    // 登录失败，显示错误消息
+                    alert(res.msg || '登录失败，请重试');
+                    
+                    // 恢复按钮状态
+                    submitBtn.html(originalText).prop('disabled', false);
+                    
+                    // 如果验证失败，刷新 Turnstile
+                    if (window.turnstile && isEnabled) {
+                        turnstile.reset();
+                        // 重置后按钮应该再次禁用，直到新的验证完成
+                        loginButton.disabled = true;
+                        document.getElementById('verification-required').style.display = 'block';
+                        document.getElementById('verification-complete').style.display = 'none';
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Login request failed:", status, error);
+                console.log("Response:", xhr.responseText);
+                
+                alert('登录请求失败，请稍后重试');
+                
+                // 恢复按钮状态
+                submitBtn.html(originalText).prop('disabled', false);
+                
+                // 如果请求失败，刷新 Turnstile
+                if (window.turnstile && isEnabled) {
+                    turnstile.reset();
+                    // 重置后按钮应该再次禁用，直到新的验证完成
+                    loginButton.disabled = true;
+                    document.getElementById('verification-required').style.display = 'block';
+                    document.getElementById('verification-complete').style.display = 'none';
+                }
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
