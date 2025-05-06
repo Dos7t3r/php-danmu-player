@@ -162,7 +162,7 @@ https://your-domain.com/index.html?url=/path/to/video.mp4&dmk=/path/to/danmuku.x
 
 ## 🧪 演示站点
 
-👉 [在线预览地址](https://player.oldbili.fun/v1.3.php?url=https://limeblogs.github.io/ubc2/vid/av14224600125.mp4&dmk=https://oldbili.github.io/dmku/%E2%80%9C%E4%B8%80%E6%BC%94%E4%B8%81%E7%9C%9F_%E4%BE%BF%E5%85%A5%E6%88%8F_%E5%BE%97%E5%A4%AA%E6%B7%B1%E2%80%9D%E2%80%94%E2%80%94%E4%B8%81%E7%9C%9F%E8%83%BD%E9%87%8F%E5%8D%95%E6%9B%B2%E3%80%8A%E7%BE%A4%E4%B8%81%E3%80%8B.26554729651.xml)
+👉 [在线预览地址](https://obplayer.pages.dev/v1.3.html?url=https://limeblogs.github.io/ubc2/vid/av14224600125.mp4&dmk=https://obplayer.pages.dev/%E2%80%9C%E4%B8%80%E6%BC%94%E4%B8%81%E7%9C%9F_%E4%BE%BF%E5%85%A5%E6%88%8F_%E5%BE%97%E5%A4%AA%E6%B7%B1%E2%80%9D%E2%80%94%E2%80%94%E4%B8%81%E7%9C%9F%E8%83%BD%E9%87%8F%E5%8D%95%E6%9B%B2%E3%80%8A%E7%BE%A4%E4%B8%81%E3%80%8B.26554729651.xml)
 
 
 
