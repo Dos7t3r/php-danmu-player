@@ -11,6 +11,8 @@
 <img width="1231" alt="image" src="https://github.com/user-attachments/assets/135827d4-352c-41f4-95bf-42322f4b1d3b" />
 <img width="1231" alt="image" src="https://github.com/user-attachments/assets/e03f6f21-4723-4755-8735-9036182b67f2" />
 <img width="1231" alt="image" src="https://github.com/user-attachments/assets/d1cdd30f-7bd1-4e9e-aeee-ac07965db8ef" />
+![image](https://github.com/user-attachments/assets/aab9b598-380e-4486-b8a3-104fac0da479)
+
 
 ## .env
 后端设置在这里 前端设置在后台
