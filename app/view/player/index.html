@@ -3,7 +3,7 @@
 <head>
    <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>{$videoTitle} | OBP v2.1.0</title>
+   <title>{$videoTitle} | OBP v2.0</title>
    <style>
    /* --- 基本重置与布局 --- */
    * {
@@ -305,13 +305,374 @@
        z-index: 99;
        display: none;
    }
+
+/* 修改移动端弹幕控制面板样式 */
+.mobile-danmuku-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 101; /* 确保高于遮罩层 */
+    padding: 10px;
+    display: none;
+    flex-direction: column;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.mobile-danmuku-controls.show {
+    transform: translateY(0);
+}
+
+/* 移动端弹幕控制面板遮罩层 */
+.mobile-danmuku-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 99; /* 确保低于控制面板 */
+    display: none;
+}
+
+/* 移除固定定位的弹幕按钮样式 */
+.mobile-danmuku-toggle,
+.mobile-danmuku-visibility-toggle {
+    display: none; /* 默认隐藏，将在JS中添加到控制栏 */
+}
+
+/* 为控制栏中的弹幕按钮添加样式 */
+.art-control-danmuku-send,
+.art-control-danmuku-visibility {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.art-control-danmuku-send:hover,
+.art-control-danmuku-visibility:hover {
+    opacity: 1;
+}
+
+/* 新增：悬浮弹幕控制面板 */
+.floating-danmuku-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    color: white;
+    padding: 15px;
+}
+
+.floating-danmuku-panel.show {
+    display: flex;
+}
+
+.floating-danmuku-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.floating-danmuku-title {
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.floating-danmuku-close {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 5px;
+}
+
+.floating-danmuku-close:hover {
+    opacity: 1;
+}
+
+.floating-danmuku-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.floating-danmuku-input-row {
+    display: flex;
+    gap: 10px;
+}
+
+.floating-danmuku-input {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: white;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.floating-danmuku-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.floating-danmuku-send {
+    background-color: #00a1d6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.floating-danmuku-send:hover {
+    background-color: #00b5e5;
+}
+
+.floating-danmuku-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.floating-danmuku-option-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.floating-danmuku-option-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.floating-danmuku-color-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+}
+
+.color-option.active {
+    border-color: white;
+}
+
+.floating-danmuku-mode {
+    display: flex;
+    gap: 10px;
+}
+
+.mode-option {
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mode-option:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.mode-option.active {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.floating-danmuku-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #00a1d6;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* 移除移动端限制，改为通过JS控制显示/隐藏 */
+@media (max-width: 767px) {
+    .art-video-player.mobile-danmuku-open .art-bottom {
+        bottom: 120px !important;
+    }
+}
 </style>
+   <!-- 添加HLS.js库 -->
+   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
    <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/artplayer-plugin-danmuku/dist/artplayer-plugin-danmuku.js"></script>
 </head>
 <body>
 <div class="artplayer-app"></div>
 <div class="notifications-container" id="notifications-container"></div>
+
+<!-- 移动端弹幕控制面板遮罩层 -->
+<div class="mobile-danmuku-overlay" id="mobile-danmuku-overlay"></div>
+
+<!-- 移动端弹幕控制面板 -->
+<div class="mobile-danmuku-controls" id="mobile-danmuku-controls">
+    <div class="mobile-danmuku-form">
+        <div class="mobile-danmuku-input-row">
+            <input type="text" class="mobile-danmuku-input" id="mobile-danmuku-text" placeholder="发送弹幕...">
+            <button class="mobile-danmuku-send" id="mobile-danmuku-send">发送</button>
+        </div>
+        <div class="mobile-danmuku-options">
+            <div class="mobile-danmuku-color-picker" id="mobile-danmuku-colors">
+                <div class="color-option active" data-color="#FFFFFF" style="background-color: #FFFFFF;"></div>
+                <div class="color-option" data-color="#FE0302" style="background-color: #FE0302;"></div>
+                <div class="color-option" data-color="#00CD00" style="background-color: #00CD00;"></div>
+                <div class="color-option" data-color="#0000FE" style="background-color: #0000FE;"></div>
+                <div class="color-option" data-color="#FFFF00" style="background-color: #FFFF00;"></div>
+                <div class="color-option" data-color="#FE7204" style="background-color: #FE7204;"></div>
+            </div>
+            <div class="mobile-danmuku-mode" id="mobile-danmuku-modes">
+                <div class="mode-option active" data-mode="0">滚动</div>
+                <div class="mode-option" data-mode="1">顶部</div>
+                <div class="mode-option" data-mode="2">底部</div>
+            </div>
+            <div class="mobile-danmuku-switch">
+                <span>弹幕</span>
+                <label class="switch">
+                    <input type="checkbox" id="mobile-danmuku-switch" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增：悬浮弹幕控制面板 -->
+<div class="floating-danmuku-panel" id="floating-danmuku-panel">
+    <div class="floating-danmuku-header">
+        <div class="floating-danmuku-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            发送弹幕
+        </div>
+        <div class="floating-danmuku-close" id="floating-danmuku-close">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+    </div>
+    <div class="floating-danmuku-content">
+        <div class="floating-danmuku-input-row">
+            <input type="text" class="floating-danmuku-input" id="floating-danmuku-text" placeholder="发送弹幕...">
+            <button class="floating-danmuku-send" id="floating-danmuku-send">发送</button>
+        </div>
+        <div class="floating-danmuku-options">
+            <div class="floating-danmuku-option-row">
+                <div class="floating-danmuku-option-label">颜色</div>
+                <div class="floating-danmuku-color-picker" id="floating-danmuku-colors">
+                    <div class="color-option active" data-color="#FFFFFF" style="background-color: #FFFFFF;"></div>
+                    <div class="color-option" data-color="#FE0302" style="background-color: #FE0302;"></div>
+                    <div class="color-option" data-color="#00CD00" style="background-color: #00CD00;"></div>
+                    <div class="color-option" data-color="#0000FE" style="background-color: #0000FE;"></div>
+                    <div class="color-option" data-color="#FFFF00" style="background-color: #FFFF00;"></div>
+                    <div class="color-option" data-color="#FE7204" style="background-color: #FE7204;"></div>
+                    <div class="color-option" data-color="#FFAA02" style="background-color: #FFAA02;"></div>
+                    <div class="color-option" data-color="#4266BE" style="background-color: #4266BE;"></div>
+                </div>
+            </div>
+            <div class="floating-danmuku-option-row">
+                <div class="floating-danmuku-option-label">模式</div>
+                <div class="floating-danmuku-mode" id="floating-danmuku-modes">
+                    <div class="mode-option active" data-mode="0">滚动</div>
+                    <div class="mode-option" data-mode="1">顶部</div>
+                    <div class="mode-option" data-mode="2">底部</div>
+                </div>
+            </div>
+            <div class="floating-danmuku-option-row">
+                <div class="floating-danmuku-option-label">弹幕开关</div>
+                <div class="floating-danmuku-switch">
+                    <label class="switch">
+                        <input type="checkbox" id="floating-danmuku-switch" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
    // --- 控制台水印 & ASCII LOGO（OldBili Player Style）---
    console.log(`%c
@@ -334,7 +695,7 @@
                          |  $$$$$$/
                           \\______/
 
-          OldBili Player v2.1.0 (ThinkPHP Edition)
+          OldBili Player v2.1.2 (ThinkPHP Edition)
  `, 'color: #42b983; font-weight: bold; font-size: 13px; font-family: monospace;');
    console.log('%cPowered by: ThinkPHP 6 + AdminLTE 3  https://github.com/oldbili/oldbiliplayer', 'color: #888; font-size: 12px;');
    console.log('%c⚠️ 请勿在控制台粘贴任何不明代码！以防泄露账号信息。', 'color: red; font-size: 14px; font-weight: bold;');
@@ -568,6 +929,8 @@
    // --- 全局变量和弹幕加载 ---
    let globalDanmukuData = [];
    let isDanmukuPanelOpen = false;
+   let isDanmukuVisible = true; // 弹幕显示状态
+   let isFloatingPanelOpen = false; // 悬浮弹幕面板状态
 
    // --- 弹幕列表功能 ---
    function addDanmukuListFeature(art) {
@@ -629,6 +992,7 @@
        danmukuTable.appendChild(danmukuTableBody);
        danmukuListContent.appendChild(danmukuTable);
 
+       // 在 danmukuListPanel 的定义后添加内容部分
        danmukuListPanel.appendChild(danmukuListHeader);
        danmukuListPanel.appendChild(danmukuListContent);
 
@@ -778,227 +1142,620 @@
        };
    }
 
+   // --- 检测URL是否为m3u8格式 ---
+   function isM3u8Url(url) {
+       if (!url) return false;
+       return url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('application/x-mpegurl');
+   }
+
+   // --- 创建HLS播放器 ---
+   function createHlsPlayer(video, url) {
+       if (Hls.isSupported()) {
+           const hls = new Hls({
+               // HLS配置选项
+               maxBufferLength: 30,
+               maxMaxBufferLength: 60,
+               fragLoadingTimeOut: 20000,
+               manifestLoadingTimeOut: 20000,
+               levelLoadingTimeOut: 20000
+           });
+           hls.loadSource(url);
+           hls.attachMedia(video);
+           hls.on(Hls.Events.MANIFEST_PARSED, function() {
+               console.log('HLS清单解析完成，可用质量:', hls.levels.length);
+               notification.show(`HLS流加载成功，共${hls.levels.length}个质量选项`, 'success', 3000);
+           });
+           
+           hls.on(Hls.Events.ERROR, function(event, data) {
+               if (data.fatal) {
+                   switch(data.type) {
+                       case Hls.ErrorTypes.NETWORK_ERROR:
+                           console.error('HLS网络错误:', data);
+                           notification.show('HLS网络错误，尝试恢复...', 'error', 3000);
+                           hls.startLoad(); // 尝试恢复
+                           break;
+                       case Hls.ErrorTypes.MEDIA_ERROR:
+                           console.error('HLS媒体错误:', data);
+                           notification.show('HLS媒体错误，尝试恢复...', 'error', 3000);
+                           hls.recoverMediaError(); // 尝试恢复媒体错误
+                           break;
+                       default:
+                           console.error('HLS致命错误:', data);
+                           notification.show('HLS播放器错误，无法恢复', 'error', 5000);
+                           hls.destroy(); // 无法恢复，销毁实例
+                           break;
+                   }
+               }
+           });
+           
+           return hls;
+       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+           // 原生支持HLS的浏览器（如Safari）
+           video.src = url;
+           notification.show('使用浏览器原生HLS支持播放', 'info', 3000);
+           return null;
+       } else {
+           notification.show('您的浏览器不支持HLS播放', 'error', 5000);
+           return null;
+       }
+   }
+
    // --- DOM 加载完成后的初始化 ---
    document.addEventListener('DOMContentLoaded', function () {
-       // 初始化在线用户系统
-       onlineUserSystem.init();
+    // 初始化在线用户系统
+    onlineUserSystem.init();
 
-       // Notification based on dmk parameter state
-       if (!hasDmkParam) {
-           notification.show('该视频没有弹幕数据', 'info', 3000);
-       }
+    // 获取悬浮弹幕面板元素
+    const floatingDanmukuPanel = document.getElementById('floating-danmuku-panel');
+    const floatingDanmukuClose = document.getElementById('floating-danmuku-close');
+    const floatingDanmukuText = document.getElementById('floating-danmuku-text');
+    const floatingDanmukuSend = document.getElementById('floating-danmuku-send');
+    const floatingDanmukuSwitch = document.getElementById('floating-danmuku-switch');
+    const floatingDanmukuColors = document.getElementById('floating-danmuku-colors');
+    const floatingDanmukuModes = document.getElementById('floating-danmuku-modes');
+    
+    // 移动端弹幕控制面板元素
+    const mobileDanmukuControls = document.getElementById('mobile-danmuku-controls');
+    const mobileDanmukuText = document.getElementById('mobile-danmuku-text');
+    const mobileDanmukuSend = document.getElementById('mobile-danmuku-send');
+    const mobileDanmukuSwitch = document.getElementById('mobile-danmuku-switch');
+    const mobileDanmukuColors = document.getElementById('mobile-danmuku-colors');
+    const mobileDanmukuModes = document.getElementById('mobile-danmuku-modes');
+    const mobileDanmukuOverlay = document.getElementById('mobile-danmuku-overlay');
 
-       try {
-           const initialFontSize = getDanmakuFontSize(mobileMediaQuery.matches);
-           console.log(`设备检测: ${mobileMediaQuery.matches ? '移动端' : '桌面端'}, 初始弹幕字号: ${initialFontSize}`);
+    let isMobileDanmukuOpen = false;
+    let selectedColor = '#FFFFFF';
+    let selectedMode = 0;
 
-           // --- 创建 Artplayer 配置对象 ---
-           const artplayerOptions = {
-               container: '.artplayer-app',
-               url: videoUrl,
-               autoSize: false,
-               fullscreen: true,
-               playbackRate: true,
-               miniProgressBar: true,
-               autoPlayback: true,
-               fastForward: true,
-               clickToPlay: true,
-               contextmenu: [
-                   {
-                       html: '发送反馈',
-                       click: () => {
-                           try { window.parent.MAC.Gbook.Report(``); }
-                           catch (e) { notification.show('请使用播放器右侧菜单[<]进行反馈！', 'info', 3000); console.error('视频反馈提示', e); }
-                       },
-                   },
-                   {
-                       html: 'OBP v2.1.0', // Updated version
-                       click: () => {
-                           try { window.parent.MAC.Gbook.Report(``); }
-                           catch (e) { notification.show('OBP 2.1.0 | ThinkPHP Edition', 'success', 3000); console.error('OBP INFO', e); }
-                       },
-                   },
-               ],
-               plugins: [
-                   artplayerPluginDanmuku({
-                       danmuku: () => {
-                           // 使用预加载的弹幕数据
-                           console.log("使用数据库弹幕数据:", preloadedDanmakuData.length);
-                           globalDanmukuData = preloadedDanmakuData;
-                           return Promise.resolve(preloadedDanmakuData);
-                       },
-                       speed: 5,
-                       margin: [10, 10],
-                       opacity: 1,
-                       color: '#FFFFFF',
-                       mode: 0,
-                       heatmap: hasDmkParam, // Show heatmap if we have danmaku
-                       points: [],
-                       modes: [0, 1, 2],
-                       fontSize: initialFontSize,
-                       antiOverlap: false,
-                       emitter: hasDmkParam, // Enable emitter if we have danmaku
-                       maxLength: 20,
-                       lockTime: 5,
-                       theme: 'dark',
-                       beforeEmit: (danmu) => {
-                           if (!hasDmkParam) {
-                               notification.show('无法发送弹幕：该视频没有弹幕数据', 'error', 3000);
-                               return false; // Artplayer expects boolean or Promise<boolean>
-                           }
+    // 添加弹幕按钮到控制栏的函数
+    function addDanmukuControlsToPlayer(art) {
+        if (!art || !art.template || !art.template.$controlsLeft) {
+            console.error("无法找到播放器控制栏");
+            return;
+        }
 
-                           return new Promise(resolve => {
-                               const content = danmu.text.trim();
-                               if (!content) {
-                                   notification.show('弹幕不能为空！', 'error', 2000);
-                                   return resolve(false);
-                               }
+        // 创建发送弹幕按钮
+        const danmukuSendButton = document.createElement('div');
+        danmukuSendButton.className = 'art-control art-control-danmuku-send';
+        danmukuSendButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+        danmukuSendButton.title = "发送弹幕";
+        
+        // 创建弹幕显示/隐藏按钮
+        const danmukuVisibilityButton = document.createElement('div');
+        danmukuVisibilityButton.className = 'art-control art-control-danmuku-visibility';
+        danmukuVisibilityButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        danmukuVisibilityButton.title = "弹幕显示/隐藏";
+        danmukuVisibilityButton.style.display = 'none'; // 暂时隐藏，保留功能
 
-                               const currentTime = artInstance ? artInstance.currentTime : 0;
-                               const postData = {
-                                   text: content,
-                                   time: currentTime,
-                                   color: danmu.color,
-                                   mode: danmu.mode,
-                                   timestamp: Date.now(), // Add current timestamp
-                                   obvId: obvId // Add video ID for database storage
-                               };
+        // 添加到控制栏
+        // 只在移动端显示这些按钮
+        if (mobileMediaQuery.matches) {
+            art.template.$controlsLeft.appendChild(danmukuSendButton);
+            art.template.$controlsLeft.appendChild(danmukuVisibilityButton);
+        } else {
+            // 在桌面端隐藏按钮
+            danmukuSendButton.style.display = 'none';
+            danmukuVisibilityButton.style.display = 'none';
+        }
 
-                               fetch('/sendDanmaku', {
-                                   method: 'POST',
-                                   headers: {
-                                       'Content-Type': 'application/json',
-                                       'Accept': 'application/json'
-                                   },
-                                   body: JSON.stringify(postData)
-                               })
-                               .then(res => {
-                                   if (!res.ok) { throw new Error(`弹幕服务器响应错误: ${res.status}`); }
-                                   // Assuming success if status is 2xx
-                                   return res.json();
-                               })
-                               .then(responseData => {
-                                   console.log("弹幕发送响应:", responseData);
-                                   notification.show('弹幕发送成功', 'success', 2000);
+        // 发送弹幕按钮点击事件 - 显示悬浮弹幕面板
+        danmukuSendButton.addEventListener('click', () => {
+            toggleFloatingPanel(true);
+        });
 
-                                   // Create the danmu object matching globalDanmukuData structure
-                                   const newDanmuData = {
-                                       text: content,
-                                       time: currentTime,
-                                       color: danmu.color,
-                                       mode: danmu.mode, // Keep original mode
-                                       timestamp: postData.timestamp // Use the timestamp sent
-                                   };
+        // 弹幕显示/隐藏按钮点击事件
+        danmukuVisibilityButton.addEventListener('click', () => {
+            if (artInstance && artInstance.plugins && artInstance.plugins.artplayerPluginDanmuku) {
+                isDanmukuVisible = !isDanmukuVisible;
+                if (isDanmukuVisible) {
+                    artInstance.plugins.artplayerPluginDanmuku.show();
+                    danmukuVisibilityButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                    notification.show('弹幕已显示', 'success', 2000);
+                } else {
+                    artInstance.plugins.artplayerPluginDanmuku.hide();
+                    danmukuVisibilityButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                    notification.show('弹幕已隐藏', 'info', 2000);
+                }
+                
+                // 同步开关状态
+                mobileDanmukuSwitch.checked = isDanmukuVisible;
+                floatingDanmukuSwitch.checked = isDanmukuVisible;
+            }
+        });
 
-                                   // Add to global data immediately for list update
-                                   globalDanmukuData.push(newDanmuData);
-                                   // Re-sort global data if timestamp is crucial for order
-                                   globalDanmukuData.sort((a, b) => (a.timestamp || a.time) - (b.timestamp || b.time));
+        return {
+            sendButton: danmukuSendButton,
+            visibilityButton: danmukuVisibilityButton
+        };
+    }
 
-                                   // Update list if open
-                                   if (isDanmukuPanelOpen && danmukuListControl) {
-                                       danmukuListControl.update();
-                                   }
+    // 悬浮弹幕面板控制函数
+    function toggleFloatingPanel(show) {
+        if (show === undefined) {
+            show = !isFloatingPanelOpen;
+        }
+        
+        isFloatingPanelOpen = show;
+        
+        if (show) {
+            floatingDanmukuPanel.classList.add('show');
+            // 聚焦输入框
+            setTimeout(() => floatingDanmukuText.focus(), 300);
+            
+            // 添加点击视频区域关闭面板的事件
+            if (artInstance && artInstance.template && artInstance.template.$video) {
+                artInstance.template.$video.addEventListener('click', closeFloatingPanelOnVideoClick);
+            }
+        } else {
+            floatingDanmukuPanel.classList.remove('show');
+            
+            // 移除点击视频区域关闭面板的事件
+            if (artInstance && artInstance.template && artInstance.template.$video) {
+                artInstance.template.$video.removeEventListener('click', closeFloatingPanelOnVideoClick);
+            }
+        }
+    }
+    
+    // 点击视频区域关闭悬浮面板的函数
+    function closeFloatingPanelOnVideoClick(e) {
+        // 确保点击的是视频区域而不是控制栏或其他元素
+        if (e.target === artInstance.template.$video) {
+            toggleFloatingPanel(false);
+        }
+    }
 
-                                   resolve(true); // Allow Artplayer to also display the danmu
-                               })
-                               .catch(err => {
-                                   notification.show('弹幕发送失败', 'error', 3000);
-                                   console.error('弹幕发送失败:', err);
-                                   resolve(false); // Prevent Artplayer from displaying
-                               });
-                           });
-                       }
-                   }),
-               ],
-           };
+    // 关闭悬浮弹幕面板按钮事件
+    floatingDanmukuClose.addEventListener('click', () => {
+        toggleFloatingPanel(false);
+    });
 
-           // --- 条件化添加字幕配置 ---
-           if (subtitleUrl) {
-               console.log(`检测到字幕文件，尝试加载: ${subtitleUrl}`);
-               let subtitleType = 'srt';
-               const urlExtension = subtitleUrl.split('.').pop().toLowerCase();
-               if (urlExtension === 'vtt') subtitleType = 'vtt';
+    // 点击遮罩层关闭弹幕发送窗口
+    mobileDanmukuOverlay.addEventListener('click', () => {
+        isMobileDanmukuOpen = false;
+        mobileDanmukuControls.classList.remove('show');
+        mobileDanmukuOverlay.style.display = 'none';
+        document.querySelector('.artplayer-app').classList.remove('mobile-danmuku-open');
+    });
 
-               artplayerOptions.subtitle = {
-                   url: subtitleUrl,
-                   type: subtitleType,
-                   encoding: 'utf-8',
-                   style: {
-                       color: '#FFFFFF',
-                       fontSize: '20px',
-                       'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.8), -1px -1px 1px rgba(0, 0, 0, 0.8), 1px -1px 1px rgba(0, 0, 0, 0.8), -1px 1px 1px rgba(0, 0, 0, 0.8)'
-                   },
-               };
-               notification.show('检测到字幕参数，尝试加载中...', 'info', 3000);
-           } else {
-               console.log("未检测到字幕文件参数");
-           }
+    // 悬浮面板颜色选择
+    const floatingColorOptions = floatingDanmukuColors.querySelectorAll('.color-option');
+    floatingColorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            floatingColorOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            selectedColor = option.getAttribute('data-color');
+        });
+    });
 
-           // --- 初始化 Artplayer ---
-           console.log("Artplayer 初始化选项:", artplayerOptions);
-           artInstance = new Artplayer(artplayerOptions); // Assign to global instance
+    // 悬浮面板模式选择
+    const floatingModeOptions = floatingDanmukuModes.querySelectorAll('.mode-option');
+    floatingModeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            floatingModeOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            selectedMode = parseInt(option.getAttribute('data-mode'));
+        });
+    });
 
-           // --- 添加弹幕列表功能 ---
-           // Store the control object returned by the function
-           const danmukuListControl = addDanmukuListFeature(artInstance);
+    // 悬浮面板弹幕开关
+    floatingDanmukuSwitch.addEventListener('change', () => {
+        if (artInstance && artInstance.plugins && artInstance.plugins.artplayerPluginDanmuku) {
+            isDanmukuVisible = floatingDanmukuSwitch.checked;
+            if (isDanmukuVisible) {
+                artInstance.plugins.artplayerPluginDanmuku.show();
+                notification.show('弹幕已开启', 'success', 2000);
+            } else {
+                artInstance.plugins.artplayerPluginDanmuku.hide();
+                notification.show('弹幕已关闭', 'info', 2000);
+            }
+            
+            // 同步其他开关状态
+            mobileDanmukuSwitch.checked = isDanmukuVisible;
+        }
+    });
 
-           // --- Artplayer 事件监听 ---
-           artInstance.on('ready', () => {
-               notification.hide(loadingId);
-               notification.show('播放器准备就绪', 'success', 2000);
-               updateDanmakuFontSize(); // Initial font size check
-               // Initial update for danmuku list header info after player is ready
-               if (danmukuListControl) danmukuListControl.update();
-           });
+    // 移动端颜色选择
+    const colorOptions = mobileDanmukuColors.querySelectorAll('.color-option');
+    colorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            colorOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            selectedColor = option.getAttribute('data-color');
+        });
+    });
 
-           artInstance.on('error', (error, reconnectTime) => {
-               notification.hide(loadingId);
-               let errorMsg = `播放器错误: ${error.message || '未知错误'}`;
-               if (reconnectTime !== undefined && reconnectTime >= 0) {
-                   errorMsg += `，将在 ${reconnectTime} 秒后尝试重连...`;
-                   notification.show(errorMsg, 'error', reconnectTime * 1000 + 1000);
-               } else {
-                   notification.show(errorMsg, 'error', 5000);
-               }
-               console.error('Artplayer 错误:', error, '重连时间:', reconnectTime);
-           });
+    // 移动端模式选择
+    const modeOptions = mobileDanmukuModes.querySelectorAll('.mode-option');
+    modeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            modeOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            selectedMode = parseInt(option.getAttribute('data-mode'));
+        });
+    });
 
-           // Subtitle events
-           artInstance.on('subtitleLoad', (url) => {
-               console.log('字幕加载成功:', url);
-               notification.show('字幕加载成功', 'success', 2000);
-           });
-           artInstance.on('subtitleError', (error) => {
-               console.error('字幕加载失败:', error);
-               notification.show(`字幕加载失败: ${error.message || '无法加载字幕文件'}`, 'error', 4000);
-           });
+    // 移动端弹幕开关
+    mobileDanmukuSwitch.addEventListener('change', () => {
+        if (artInstance && artInstance.plugins && artInstance.plugins.artplayerPluginDanmuku) {
+            isDanmukuVisible = mobileDanmukuSwitch.checked;
+            if (isDanmukuVisible) {
+                artInstance.plugins.artplayerPluginDanmuku.show();
+                notification.show('弹幕已开启', 'success', 2000);
+            } else {
+                artInstance.plugins.artplayerPluginDanmuku.hide();
+                notification.show('弹幕已关闭', 'info', 2000);
+            }
+            
+            // 同步悬浮面板开关状态
+            floatingDanmukuSwitch.checked = isDanmukuVisible;
+        }
+    });
 
-           // Danmuku plugin events
-           artInstance.on('artplayerPluginDanmuku:loaded', (danmus) => {
-               // This event fires *after* the loadDanmukuData completes via the 'danmuku' option function
-               const count = Array.isArray(danmus) ? danmus.length : 0;
-               if (hasDmkParam) {
-                   notification.show(`已从数据库加载 ${count} 条弹幕`, 'info', 3000);
-               }
-               // Update the list panel now that data is confirmed loaded into plugin
-               if (danmukuListControl) danmukuListControl.update();
-               globalDanmukuData = Array.isArray(danmus) ? danmus : []; // Sync global data with plugin's data
-           });
+    // 发送弹幕函数
+    function sendDanmuku(text) {
+        if (!text) {
+            notification.show('弹幕内容不能为空', 'error', 2000);
+            return;
+        }
+        
+        if (artInstance && artInstance.plugins && artInstance.plugins.artplayerPluginDanmuku) {
+            // 先获取当前播放时间
+            const currentTime = artInstance.currentTime;
+            
+            // 准备发送到后端的数据
+            const postData = {
+                text: text,
+                time: currentTime,
+                color: selectedColor,
+                mode: selectedMode,
+                timestamp: Date.now(),
+                obvId: obvId
+            };
+            
+            // 发送到后端
+            fetch('/sendDanmaku', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(postData)
+            })
+            .then(res => {
+                if (!res.ok) { throw new Error(`弹幕服务器响应错误: ${res.status}`); }
+                return res.json();
+            })
+            .then(responseData => {
+                console.log("弹幕发送响应:", responseData);
+                notification.show('弹幕发送成功', 'success', 2000);
+                
+                // 本地显示弹幕
+                artInstance.plugins.artplayerPluginDanmuku.emit({
+                    text: text,
+                    color: selectedColor,
+                    mode: selectedMode
+                });
+                
+                // 添加到全局数据
+                const newDanmuData = {
+                    text: text,
+                    time: currentTime,
+                    color: selectedColor,
+                    mode: selectedMode,
+                    timestamp: postData.timestamp
+                };
+                
+                globalDanmukuData.push(newDanmuData);
+                globalDanmukuData.sort((a, b) => (a.timestamp || a.time) - (b.timestamp || b.time));
+                
+                // 更新列表
+                if (isDanmukuPanelOpen && danmukuListControl) {
+                    danmukuListControl.update();
+                }
+                
+                // 清空输入框
+                mobileDanmukuText.value = '';
+                floatingDanmukuText.value = '';
+                
+                // 关闭弹幕发送面板
+                isMobileDanmukuOpen = false;
+                mobileDanmukuControls.classList.remove('show');
+                mobileDanmukuOverlay.style.display = 'none';
+                document.querySelector('.artplayer-app').classList.remove('mobile-danmuku-open');
+                
+                // 关闭悬浮面板
+                toggleFloatingPanel(false);
+            })
+            .catch(err => {
+                notification.show('弹幕发送失败', 'error', 3000);
+                console.error('弹幕发送失败:', err);
+            });
+        } else {
+            notification.show('弹幕系统未初始化', 'error', 2000);
+        }
+    }
 
-           artInstance.on('artplayerPluginDanmuku:error', (error) => {
-               console.error("弹幕插件错误:", error);
-               notification.show(`弹幕加载或处理失败: ${error.message || '未知弹幕错误'}`, 'error', 5000);
-               // Update list to show error or empty state
-               if (danmukuListControl) danmukuListControl.update();
-           });
+    // 移动端发送弹幕
+    mobileDanmukuSend.addEventListener('click', () => {
+        sendDanmuku(mobileDanmukuText.value.trim());
+    });
+    
+    mobileDanmukuText.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendDanmuku(mobileDanmukuText.value.trim());
+        }
+    });
+    
+    // 悬浮面板发送弹幕
+    floatingDanmukuSend.addEventListener('click', () => {
+        sendDanmuku(floatingDanmukuText.value.trim());
+    });
+    
+    floatingDanmukuText.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendDanmuku(floatingDanmukuText.value.trim());
+        }
+    });
 
-       } catch (error) {
-           notification.hide(loadingId);
-           notification.show('播放器初始化过程中发生严重错误', 'error', 0);
-           console.error('播放器初始化失败 (Catch Block):', error);
-       }
-   });
+    // Notification based on dmk parameter state
+    if (!hasDmkParam) {
+        notification.show('该视频没有弹幕数据', 'info', 3000);
+    }
+
+    try {
+        const initialFontSize = getDanmakuFontSize(mobileMediaQuery.matches);
+        console.log(`设备检测: ${mobileMediaQuery.matches ? '移动端' : '桌面端'}, 初始弹幕字号: ${initialFontSize}`);
+
+        // --- 创建 Artplayer 配置对象 ---
+        const artplayerOptions = {
+            container: '.artplayer-app',
+            url: videoUrl,
+            autoSize: false,
+            fullscreen: true,
+            playbackRate: true,
+            miniProgressBar: true,
+            autoPlayback: true,
+            fastForward: true,
+            clickToPlay: true,
+            contextmenu: [
+                {
+                    html: '发送反馈',
+                    click: () => {
+                        try { window.parent.MAC.Gbook.Report(``); }
+                        catch (e) { notification.show('请使用播放器右侧菜单[<]进行反馈！', 'info', 3000); console.error('视频反馈提示', e); }
+                    },
+                },
+                {
+                    html: 'OBP v2.1.2', // Updated version
+                    click: () => {
+                        try { window.parent.MAC.Gbook.Report(``); }
+                        catch (e) { notification.show('OBP 2.1.2 | ThinkPHP Edition', 'success', 3000); console.error('OBP INFO', e); }
+                    },
+                },
+            ],
+            plugins: [
+                artplayerPluginDanmuku({
+                    danmuku: () => {
+                        // 使用预加载的弹幕数据
+                        console.log("使用数据库弹幕数据:", preloadedDanmakuData.length);
+                        globalDanmukuData = preloadedDanmakuData;
+                        return Promise.resolve(preloadedDanmakuData);
+                    },
+                    speed: 5,
+                    margin: [10, 10],
+                    opacity: 1,
+                    color: '#FFFFFF',
+                    mode: 0,
+                    heatmap: hasDmkParam, // Show heatmap if we have danmaku
+                    points: [],
+                    modes: [0, 1, 2],
+                    fontSize: initialFontSize,
+                    antiOverlap: false,
+                    emitter: hasDmkParam, // Enable emitter if we have danmaku
+                    maxLength: 20,
+                    lockTime: 5,
+                    theme: 'dark',
+                    beforeEmit: (danmu) => {
+                        if (!hasDmkParam) {
+                            notification.show('无法发送弹幕：该视频没有弹幕数据', 'error', 3000);
+                            return false; // Artplayer expects boolean or Promise<boolean>
+                        }
+
+                        return new Promise(resolve => {
+                            const content = danmu.text.trim();
+                            if (!content) {
+                                notification.show('弹幕不能为空！', 'error', 2000);
+                                return resolve(false);
+                            }
+
+                            const currentTime = artInstance ? artInstance.currentTime : 0;
+                            const postData = {
+                                text: content,
+                                time: currentTime,
+                                color: danmu.color,
+                                mode: danmu.mode,
+                                timestamp: Date.now(), // Add current timestamp
+                                obvId: obvId // Add video ID for database storage
+                            };
+
+                            fetch('/sendDanmaku', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify(postData)
+                            })
+                            .then(res => {
+                                if (!res.ok) { throw new Error(`弹幕服务器响应错误: ${res.status}`); }
+                                // Assuming success if status is 2xx
+                                return res.json();
+                            })
+                            .then(responseData => {
+                                console.log("弹幕发送响应:", responseData);
+                                notification.show('弹幕发送成功', 'success', 2000);
+
+                                // Create the danmu object matching globalDanmukuData structure
+                                const newDanmuData = {
+                                    text: content,
+                                    time: currentTime,
+                                    color: danmu.color,
+                                    mode: danmu.mode, // Keep original mode
+                                    timestamp: postData.timestamp // Use the timestamp sent
+                                };
+
+                                // Add to global data immediately for list update
+                                globalDanmukuData.push(newDanmuData);
+                                // Re-sort global data if timestamp is crucial for order
+                                globalDanmukuData.sort((a, b) => (a.timestamp || a.time) - (b.timestamp || b.time));
+
+                                // Update list if open
+                                if (isDanmukuPanelOpen && danmukuListControl) {
+                                    danmukuListControl.update();
+                                }
+
+                                resolve(true); // Allow Artplayer to also display the danmu
+                            })
+                            .catch(err => {
+                                notification.show('弹幕发送失败', 'error', 3000);
+                                console.error('弹幕发送失败:', err);
+                                resolve(false); // Prevent Artplayer from displaying
+                            });
+                        });
+                    }
+                }),
+            ],
+            // 添加自定义播放器事件处理
+            customType: {
+                m3u8: function(video, url) {
+                    // 使用HLS.js处理m3u8视频
+                    createHlsPlayer(video, url);
+                }
+            }
+        };
+
+        // --- 条件化添加字幕配置 ---
+        if (subtitleUrl) {
+            console.log(`检测到字幕文件，尝试加载: ${subtitleUrl}`);
+            let subtitleType = 'srt';
+            const urlExtension = subtitleUrl.split('.').pop().toLowerCase();
+            if (urlExtension === 'vtt') subtitleType = 'vtt';
+
+            artplayerOptions.subtitle = {
+                url: subtitleUrl,
+                type: subtitleType,
+                encoding: 'utf-8',
+                style: {
+                    color: '#FFFFFF',
+                    fontSize: '20px',
+                    'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.8), -1px -1px 1px rgba(0, 0, 0, 0.8), 1px -1px 1px rgba(0, 0, 0, 0.8), -1px 1px 1px rgba(0, 0, 0, 0.8)'
+                },
+            };
+            notification.show('尝试加载字幕..', 'info', 3000);
+        } else {
+            console.log("未检测到字幕文件参数");
+        }
+
+        // --- 初始化 Artplayer ---
+        console.log("Artplayer 初始化选项:", artplayerOptions);
+        artInstance = new Artplayer(artplayerOptions); // Assign to global instance
+
+        // --- 添加弹幕列表功能 ---
+        // Store the control object returned by the function
+        const danmukuListControl = addDanmukuListFeature(artInstance);
+        
+        // --- 添加弹幕控制按钮到播放器控制栏 ---
+        const danmukuControls = addDanmukuControlsToPlayer(artInstance);
+
+        // --- 检测视频URL是否为m3u8格式 ---
+        if (isM3u8Url(videoUrl)) {
+            notification.show('检测到M3U8格式视频，使用HLS播放器', 'info', 3000);
+        }
+
+        // --- Artplayer 事件监听 ---
+        artInstance.on('ready', () => {
+            notification.hide(loadingId);
+            notification.show('播放器准备就绪', 'success', 2000);
+            updateDanmakuFontSize(); // Initial font size check
+            
+            // 初始化移动端弹幕开关状态
+            if (artInstance.plugins.artplayerPluginDanmuku) {
+                mobileDanmukuSwitch.checked = true;
+                floatingDanmukuSwitch.checked = true;
+                isDanmukuVisible = true;
+            }
+            // Initial update for danmuku list header info after player is ready
+            if (danmukuListControl) danmukuListControl.update();
+        });
+
+        artInstance.on('error', (error, reconnectTime) => {
+            notification.hide(loadingId);
+            let errorMsg = `播放器错误: ${error.message || '可能是网络错误'}`;
+            if (reconnectTime !== undefined && reconnectTime >= 0) {
+                errorMsg += `，第${reconnectTime}次重连...`;
+                notification.show(errorMsg, 'error', reconnectTime * 1000 + 1000);
+            } else {
+                errorMsg += `，请检查网络连接`;
+                notification.show(errorMsg, 'error', 5000);
+            }
+            console.error('Artplayer 错误:', error, '重连时间:', reconnectTime);
+        });
+
+        // Subtitle events
+        artInstance.on('subtitleLoad', (url) => {
+            console.log('字幕加载成功:', url);
+            notification.show('字幕加载成功', 'success', 2000);
+        });
+        artInstance.on('subtitleError', (error) => {
+            console.error('字幕加载失败:', error);
+            notification.show(`字幕加载失败: ${error.message || '无法加载字幕文件'}`, 'error', 4000);
+        });
+
+        // Danmuku plugin events
+        artInstance.on('artplayerPluginDanmuku:loaded', (danmus) => {
+            // This event fires *after* the loadDanmukuData completes via the 'danmuku' option function
+            const count = Array.isArray(danmus) ? danmus.length : 0;
+            if (hasDmkParam) {
+                notification.show(`已装填加载 ${count} 条弹幕`, 'info', 3000);
+            }
+            // Update the list panel now that data is confirmed loaded into plugin
+            if (danmukuListControl) danmukuListControl.update();
+            globalDanmukuData = Array.isArray(danmus) ? danmus : []; // Sync global data with plugin's data
+        });
+
+        artInstance.on('artplayerPluginDanmuku:error', (error) => {
+            console.error("弹幕插件错误:", error);
+            notification.show(`弹幕加载或处理失败: ${error.message || '未知弹幕错误'}`, 'error', 5000);
+            // Update list to show error or empty state
+            if (danmukuListControl) danmukuListControl.update();
+        });
+
+    } catch (error) {
+        notification.hide(loadingId);
+        notification.show('播放器初始化过程中发生严重错误', 'error', 0);
+        console.error('播放器初始化失败 (Catch Block):', error);
+    }
+});
 
    // --- Cleanup on Page Unload ---
    window.addEventListener('unload', () => {
