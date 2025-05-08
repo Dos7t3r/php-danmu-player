@@ -589,6 +589,36 @@ class Admin extends BaseController
         
         return View::fetch();
     }
+         // 合并XML保存到服务器
+        public function saveMergedDanmaku()
+        {
+            $this->checkLogin(); // 验证登录
+        
+            $mergedXML = Request::post('merged_xml');
+        
+            if (empty($mergedXML)) {
+                return json(['code' => 0, 'msg' => '未收到XML内容']);
+            }
+        
+            $saveDir = root_path() . 'public/danmaku/';
+            if (!is_dir($saveDir)) {
+                mkdir($saveDir, 0777, true);
+            }
+        
+            $filename = 'merged_' . date('Ymd_His') . '.xml';
+            $filePath = $saveDir . $filename;
+        
+            if (file_put_contents($filePath, $mergedXML)) {
+                // 记录操作日志
+                $admin = Session::get('admin');
+                $this->logOperation("合并保存弹幕XML文件: {$filename}", $admin['username']);
+        
+                return json(['status' => 1, 'msg' => '保存成功', 'filename' => $filename]);
+            } else {
+                return json(['status' => 0, 'msg' => '文件保存失败']);
+            }
+        }
+
 
     // 删除弹幕
     public function deleteDanmaku()
@@ -689,134 +719,101 @@ class Admin extends BaseController
         return View::fetch();
     }
 
-    // 导入XML弹幕处理
-    public function doImportXml()
-    {
-        $this->checkLogin();
-        
-        $videoId = input('post.video_id', 0, FILTER_VALIDATE_INT);
-        $xmlFile = input('post.xml_file', '');
-        
-        if ($videoId <= 0 || empty($xmlFile)) {
-            return json(['code' => 0, 'msg' => '参数错误']);
-        }
-        
-        $xmlPath = root_path() . 'public/danmaku/' . $xmlFile;
-        if (!file_exists($xmlPath)) {
-            return json(['code' => 0, 'msg' => 'XML文件不存在']);
-        }
-        
-        try {
-            // 检查视频是否存在
-            $video = Db::name('videos')->where('id', $videoId)->find();
-            if (!$video) {
-                return json(['code' => 0, 'msg' => '视频不存在']);
-            }
-            
-            // 弹幕表名
-            $danmakuTable = "obp_danmu_{$videoId}";
-            
-            // 检查表是否存在，不存在则创建
-            $exists = Db::query("SHOW TABLES LIKE '{$danmakuTable}'");
-            if (!$exists) {
-                Db::execute("
-                    CREATE TABLE `{$danmakuTable}` (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        text TEXT NOT NULL,
-                        time FLOAT NOT NULL,
-                        mode INT DEFAULT 0,
-                        color VARCHAR(20) DEFAULT '#FFFFFF',
-                        timestamp BIGINT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                ");
-            }
-            
-            // 清空现有弹幕
-            Db::execute("TRUNCATE TABLE `{$danmakuTable}`");
-            
-            // 解析XML文件
-            $xml = simplexml_load_file($xmlPath);
-            if (!$xml) {
-                return json(['code' => 0, 'msg' => '无法解析XML文件']);
-            }
-            
-            // 导入弹幕
-            $count = 0;
-            foreach ($xml->d as $d) {
-                $p = (string)$d->attributes()->p;
-                $text = (string)$d;
-                
-                if ($p && $text) {
-                    $parts = explode(',', $p);
-                    if (count($parts) >= 5) {
-                        $time = floatval($parts[0]);
-                        $type = intval($parts[1]); // 1=滚动, 4=底部, 5=顶部
-                        $color = intval($parts[3]); // XML color is decimal
-                        $timestamp = intval($parts[4]) * 1000; // Unix timestamp in seconds
-                        
-                        // 转换模式: 1->0(滚动), 5->1(顶部), 4->2(底部)
-                        $mode = 0;
-                        if ($type === 5) $mode = 1;
-                        else if ($type === 4) $mode = 2;
-                        
-                        // 转换颜色为十六进制
-                        $colorHex = '#' . dechex($color);
-                        
-                        // 插入数据库
-                        Db::table($danmakuTable)->insert([
-                            'text' => $text,
-                            'time' => $time,
-                            'mode' => $mode,
-                            'color' => $colorHex,
-                            'timestamp' => $timestamp
-                        ]);
-                        
-                        $count++;
-                    }
-                }
-            }
-            
-            // 记录操作
-            $admin = Session::get('admin');
-            $this->logOperation("导入XML弹幕 视频ID:{$videoId} 文件:{$xmlFile} 数量:{$count}", $admin['username']);
-            
-            return json(['code' => 1, 'msg' => "成功导入 {$count} 条弹幕"]);
-        } catch (\Exception $e) {
-            return json(['code' => 0, 'msg' => '导入失败: ' . $e->getMessage()]);
-        }
-    }
-
     // 上传XML文件
     public function uploadXml()
     {
-        $this->checkLogin();
-        
-        $file = request()->file('file');
-        if (!$file) {
-            return json(['code' => 0, 'msg' => '没有上传文件']);
-        }
-        
-        $xmlDir = root_path() . 'public/danmaku/';
-        if (!is_dir($xmlDir)) {
-            mkdir($xmlDir, 0755, true);
-        }
-        
         try {
-            $info = \think\facade\Filesystem::disk('public')->putFile('danmaku', $file);
-            if (!$info) {
-                return json(['code' => 0, 'msg' => '上传失败']);
+            $this->checkLogin();
+            
+            // 记录请求信息
+            Log::record('开始处理文件上传请求', 'info');
+            Log::record('POST数据: ' . json_encode($_POST), 'info');
+            Log::record('FILES数据: ' . json_encode($_FILES), 'info');
+            
+            $file = request()->file('file');
+            if (!$file) {
+                Log::record('未找到上传文件', 'error');
+                return json(['code' => 0, 'msg' => '没有上传文件']);
             }
             
-            // 获取文件名
-            $fileName = basename($info);
+            // 验证文件类型
+            $mimeType = $file->getMime();
+            $extension = strtolower($file->getOriginalExtension());
+            Log::record("文件信息 - MIME类型: {$mimeType}, 扩展名: {$extension}", 'info');
+            
+            if ($extension !== 'xml' || !in_array($mimeType, ['text/xml', 'application/xml'])) {
+                Log::record("文件类型验证失败 - MIME类型: {$mimeType}, 扩展名: {$extension}", 'error');
+                return json(['code' => 0, 'msg' => '只允许上传XML文件']);
+            }
+            
+            // 验证文件大小（10MB）
+            $fileSize = $file->getSize();
+            Log::record("文件大小: {$fileSize} 字节", 'info');
+            
+            if ($fileSize > 10 * 1024 * 1024) {
+                Log::record("文件大小超过限制: {$fileSize} 字节", 'error');
+                return json(['code' => 0, 'msg' => '文件大小不能超过10MB']);
+            }
+            
+            $xmlDir = root_path() . 'public/danmaku/';
+            if (!is_dir($xmlDir)) {
+                Log::record("创建上传目录: {$xmlDir}", 'info');
+                if (!mkdir($xmlDir, 0755, true)) {
+                    Log::record("创建目录失败: {$xmlDir}", 'error');
+                    return json(['code' => 0, 'msg' => '创建上传目录失败']);
+                }
+            }
+            
+            // 获取原始文件名并处理
+            $originalName = $file->getOriginalName();
+            $originalNameWithoutExt = pathinfo($originalName, PATHINFO_FILENAME);
+            // 生成安全的文件名，保留原始文件名
+            $fileName = date('YmdHis') . '_' . preg_replace('/[^a-zA-Z0-9\x{4e00}-\x{9fa5}]/u', '_', $originalNameWithoutExt) . '.xml';
+            $savePath = $xmlDir . $fileName;
+            Log::record("准备保存文件到: {$savePath}", 'info');
+            
+            // 直接移动文件（修正：传入目录和文件名，防止生成文件夹）
+            if (!$file->move($xmlDir, $fileName)) {
+                Log::record("文件移动失败: {$xmlDir}{$fileName}", 'error');
+                return json(['code' => 0, 'msg' => '文件保存失败']);
+            }
+            
+            // 判断路径是否为文件
+            if (!is_file($savePath)) {
+                Log::record("不是有效的文件: {$savePath}", 'error');
+                return json(['code' => 0, 'msg' => '不是有效的文件']);
+            }
+            
+            $xmlContent = file_get_contents($savePath);
+            if (empty($xmlContent)) {
+                Log::record("文件内容为空: {$savePath}", 'error');
+                return json(['code' => 0, 'msg' => '文件内容为空']);
+            }
+            
+            // 使用simplexml_load_string解析XML内容
+            $xml = simplexml_load_string($xmlContent);
+            if (!$xml) {
+                Log::record("XML解析失败: " . libxml_get_last_error()->message, 'error');
+                @unlink($savePath);
+                return json(['code' => 0, 'msg' => '无法解析XML文件']);
+            }
             
             // 记录操作
             $admin = Session::get('admin');
-            $this->logOperation("上传XML文件 {$fileName}", $admin['username']);
+            $this->logOperation("上传XML文件 {$originalName} -> {$fileName}", $admin['username']);
             
+            Log::record("文件上传成功: {$fileName}", 'info');
             return json(['code' => 1, 'msg' => '上传成功', 'file' => $fileName]);
+            
         } catch (\Exception $e) {
+            // 记录详细的错误信息
+            Log::record("文件上传异常: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'error');
+            
+            // 发生错误时删除已上传的文件
+            if (isset($savePath) && file_exists($savePath)) {
+                @unlink($savePath);
+            }
+            
             return json(['code' => 0, 'msg' => '上传失败: ' . $e->getMessage()]);
         }
     }
@@ -1152,5 +1149,128 @@ class Admin extends BaseController
         }
         
         return $total;
+    }
+    // 显示合并工具页面
+    public function danmakuMerger() {
+        return View::fetch('admin/danmaku_merger');
+    }
+    
+    // 导入XML弹幕处理
+    public function doImportXml()
+    {
+        $this->checkLogin();
+        
+        $videoId = input('post.video_id', 0, FILTER_VALIDATE_INT);
+        $xmlFile = input('post.xml_file', '');
+        $clearExisting = input('post.clear_existing', false);
+        
+        if ($videoId <= 0 || empty($xmlFile)) {
+            return json(['code' => 0, 'msg' => '参数错误']);
+        }
+        
+        $xmlPath = root_path() . 'public/danmaku/' . $xmlFile;
+        Log::record("尝试读取XML文件: {$xmlPath}", 'info');
+        
+        if (!file_exists($xmlPath)) {
+            Log::record("XML文件不存在: {$xmlPath}", 'error');
+            return json(['code' => 0, 'msg' => 'XML文件不存在']);
+        }
+        
+        try {
+            // 检查视频是否存在
+            $video = Db::name('videos')->where('id', $videoId)->find();
+            if (!$video) {
+                return json(['code' => 0, 'msg' => '视频不存在']);
+            }
+            
+            // 弹幕表名
+            $danmakuTable = "obp_danmu_{$videoId}";
+            
+            // 检查表是否存在，不存在则创建
+            $exists = Db::query("SHOW TABLES LIKE '{$danmakuTable}'");
+            if (!$exists) {
+                Db::execute("
+                    CREATE TABLE `{$danmakuTable}` (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        text TEXT NOT NULL,
+                        time FLOAT NOT NULL,
+                        mode INT DEFAULT 0,
+                        color VARCHAR(20) DEFAULT '#FFFFFF',
+                        timestamp BIGINT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ");
+            }
+            
+            // 如果选择清空现有弹幕
+            if ($clearExisting) {
+                Db::execute("TRUNCATE TABLE `{$danmakuTable}`");
+            }
+            
+            // 判断路径是否为文件
+            if (!is_file($xmlPath)) {
+                Log::record("不是有效的文件: {$xmlPath}", 'error');
+                return json(['code' => 0, 'msg' => '不是有效的文件']);
+            }
+            
+            $xmlContent = file_get_contents($xmlPath);
+            if (empty($xmlContent)) {
+                Log::record("文件内容为空: {$xmlPath}", 'error');
+                return json(['code' => 0, 'msg' => '文件内容为空']);
+            }
+            
+            // 使用simplexml_load_string解析XML内容
+            $xml = simplexml_load_string($xmlContent);
+            if (!$xml) {
+                Log::record("XML解析失败: " . libxml_get_last_error()->message, 'error');
+                return json(['code' => 0, 'msg' => '无法解析XML文件']);
+            }
+            
+            // 导入弹幕
+            $count = 0;
+            foreach ($xml->d as $d) {
+                $p = (string)$d->attributes()->p;
+                $text = (string)$d;
+                
+                if ($p && $text) {
+                    $parts = explode(',', $p);
+                    if (count($parts) >= 5) {
+                        $time = floatval($parts[0]);
+                        $type = intval($parts[1]); // 1=滚动, 4=底部, 5=顶部
+                        $color = intval($parts[3]); // XML color is decimal
+                        $timestamp = intval($parts[4]) * 1000; // Unix timestamp in seconds
+                        
+                        // 转换模式: 1->0(滚动), 5->1(顶部), 4->2(底部)
+                        $mode = 0;
+                        if ($type === 5) $mode = 1;
+                        else if ($type === 4) $mode = 2;
+                        
+                        // 转换颜色为十六进制
+                        $colorHex = '#' . dechex($color);
+                        
+                        // 插入数据库
+                        Db::table($danmakuTable)->insert([
+                            'text' => $text,
+                            'time' => $time,
+                            'mode' => $mode,
+                            'color' => $colorHex,
+                            'timestamp' => $timestamp
+                        ]);
+                        
+                        $count++;
+                    }
+                }
+            }
+            
+            // 记录操作
+            $admin = Session::get('admin');
+            $action = $clearExisting ? "导入XML弹幕(清空原有)" : "导入XML弹幕(追加)";
+            $this->logOperation("{$action} 视频ID:{$videoId} 文件:{$xmlFile} 数量:{$count}", $admin['username']);
+            
+            return json(['code' => 1, 'msg' => "成功导入 {$count} 条弹幕"]);
+        } catch (\Exception $e) {
+            Log::record("XML导入异常: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'error');
+            return json(['code' => 0, 'msg' => '导入失败: ' . $e->getMessage()]);
+        }
     }
 }
