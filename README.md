@@ -35,6 +35,7 @@
 4. 安装composer（推荐使用宝塔的composer，选择composer.json即可）
 5. 访问管理后台：`http://您的域名/admin`
 6. 默认管理员账号：admin，密码：admin123 （如果无法访问请使用fuck.php强制重设密码）
+7. 上传XML文件需要安装PHP的fileinfo插件
 
 ## 目录结构
 
