@@ -18,6 +18,19 @@
 ## .env
 后端设置在这里 前端设置在后台
 
+## 伪静态配置
+如果访问后台404，请检查伪静态
+```
+location ~* (runtime|application)/{
+	return 403;
+}
+location / {
+	if (!-e $request_filename){
+		rewrite  ^(.*)$  /index.php?s=$1  last;   break;
+	}
+}
+```
+
 ## 特性
 
 - 基于ThinkPHP 6框架，代码结构清晰
